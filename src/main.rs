@@ -9,7 +9,7 @@ use std::{fs, error::Error};
 // R -> positive nums 
 
 
-fn parser(path:&str) -> Result<Vec<isize>, Box<dyn Error>>  {
+fn parser(path:&str) -> Result<Vec<i32>, Box<dyn Error>>  {
     let contents = match fs::read_to_string(path) {
         Ok(p) => p,
         Err(e) => return Err(format!("Invalid path {}", e).into())
@@ -20,7 +20,7 @@ fn parser(path:&str) -> Result<Vec<isize>, Box<dyn Error>>  {
             continue;
         }
         let (letter, rest) = line.split_at(1);
-        let mut value: isize = match rest.parse() {
+        let mut value: i32 = match rest.parse() {
             Ok(v) => v,
             Err(e) => {
                 return Err ( format!("Invalid number {}", e).into() )
@@ -37,9 +37,9 @@ fn parser(path:&str) -> Result<Vec<isize>, Box<dyn Error>>  {
     Ok(nums)
 }
 
-fn secret_decoder_alpha(nums:&[isize]) -> isize {
-    let mut password:isize = 0;
-    let mut state:isize = 50;
+fn secret_decoder_alpha(nums:&[i32]) -> i32 {
+    let mut password:i32 = 0;
+    let mut state:i32 = 50;
     let wheel = 100;
     
     for &n in nums {
@@ -52,9 +52,9 @@ fn secret_decoder_alpha(nums:&[isize]) -> isize {
 
 }
 
-fn secret_decoder_beta(nums:&[isize]) -> isize {
-    let mut password:isize = 0;
-    let mut state:isize = 50;
+fn secret_decoder_beta(nums:&[i32]) -> i32 {
+    let mut password:i32 = 0;
+    let mut state:i32 = 50;
     let wheel = 100;
     
     for &n in nums {
