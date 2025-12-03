@@ -27,8 +27,10 @@ impl Primes {
     fn extender(begin: usize, end: usize, primes: &mut Vec<usize>) {
         for n in (begin..=end).step_by(2) {
             let mut is_prime = true;
-            for i in 0..primes.len() {
-                if n % primes[i] == 0 {
+            let sqrt_n = (n as f64).sqrt() as usize;
+            for &p in primes.iter() {
+                if p > sqrt_n { break; }
+                if n % p == 0 {
                     is_prime = false;
                     break;
                 }
@@ -88,6 +90,7 @@ fn validate_codes_beta(codes: &[(usize, usize)], primes: &mut Primes) -> usize {
                 usize::MAX - num > sum_invalid_codes,
                 "overflow increase integer precision"
             );
+            // could make a buffer to reuse as this is heavy
             let n_str = num.to_string();
             let n_len = n_str.len();
             let mut i = 0;
