@@ -128,8 +128,6 @@ fn main() {
                 "Beta Validate Codes {}",
                 validate_codes_beta(&codes, &mut primes)
             );
-            let wrong: usize = 33505554546;
-            println!("it is not {}", wrong);
         }
         Err(e) => {
             println!("unsuccessful parse {}", e);
