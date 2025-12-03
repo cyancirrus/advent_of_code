@@ -1,17 +1,16 @@
-use std::{fs, error::Error};
+use std::{error::Error, fs};
 // starts at 50
 // L**, R**
 // password is how many times it hits 0 exactly through any sequence of rotations
 
 // parse data, loop through if it hits zero add one to secret code
 // L -> negative nums
-// R -> positive nums 
+// R -> positive nums
 
-
-pub fn parser(path:&str) -> Result<Vec<i32>, Box<dyn Error>>  {
+pub fn parser(path: &str) -> Result<Vec<i32>, Box<dyn Error>> {
     let contents = match fs::read_to_string(path) {
         Ok(p) => p,
-        Err(e) => return Err(format!("Invalid path {}", e).into())
+        Err(e) => return Err(format!("Invalid path {}", e).into()),
     };
     let mut nums = Vec::new();
     for line in contents.lines() {
@@ -21,9 +20,7 @@ pub fn parser(path:&str) -> Result<Vec<i32>, Box<dyn Error>>  {
         let (letter, rest) = line.split_at(1);
         let mut value: i32 = match rest.parse() {
             Ok(v) => v,
-            Err(e) => {
-                return Err ( format!("Invalid number {}", e).into() )
-            }
+            Err(e) => return Err(format!("Invalid number {}", e).into()),
         };
         match letter {
             "L" => value = -value,
@@ -31,31 +28,29 @@ pub fn parser(path:&str) -> Result<Vec<i32>, Box<dyn Error>>  {
             _ => return Err(format!("Unknown Prefix {}", letter).into()),
         };
         nums.push(value);
-
     }
     Ok(nums)
 }
 
-pub fn secret_decoder_alpha(nums:&[i32]) -> i32 {
-    let mut password:i32 = 0;
-    let mut state:i32 = 50;
+pub fn secret_decoder_alpha(nums: &[i32]) -> i32 {
+    let mut password: i32 = 0;
+    let mut state: i32 = 50;
     let wheel = 100;
-    
+
     for &n in nums {
-        state = (state + wheel  + n) % wheel;
+        state = (state + wheel + n) % wheel;
         if state == 0 {
             password += 1;
         }
     }
     password
-
 }
 
-pub fn secret_decoder_beta(nums:&[i32]) -> i32 {
-    let mut password:i32 = 0;
-    let mut state:i32 = 50;
+pub fn secret_decoder_beta(nums: &[i32]) -> i32 {
+    let mut password: i32 = 0;
+    let mut state: i32 = 50;
     let wheel = 100;
-    
+
     for &n in nums {
         let zero_ticks = n.abs() / wheel;
         let n_eff = n % wheel;
