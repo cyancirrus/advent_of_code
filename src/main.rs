@@ -21,7 +21,6 @@ impl Primes {
             return;
         }
         Self::extender(self.max_checked, n, &mut self.primes);
-
         self.max_checked = n;
     }
 
