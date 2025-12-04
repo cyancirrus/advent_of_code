@@ -182,6 +182,9 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     nodes
 }
 
+// // Should use the beta version, btreeset while having remove would need to do something quicker
+// // could use a like dict with a 1,0 and check if it's 1,0 and if it's 0 insert into queue
+// // but that's overengineered and like simple continue is quicker
 // fn main() {
 //     let num_parse = parser("./data/day_4.txt");
 //     match num_parse {
@@ -234,15 +237,27 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
 //             let avg_beta = total_beta / iterations;
 //             let avg_gamma = total_gamma / iterations;
 
-//             println!("Alpha avg: {:?}", std::time::Duration::from_nanos(avg_alpha as u64));
-//             println!("Beta avg:  {:?}", std::time::Duration::from_nanos(avg_beta as u64));
-//             println!("Gamma avg: {:?}", std::time::Duration::from_nanos(avg_gamma as u64));
+//             println!(
+//                 "Alpha avg: {:?}",
+//                 std::time::Duration::from_nanos(avg_alpha as u64)
+//             );
+//             println!(
+//                 "Beta avg:  {:?}",
+//                 std::time::Duration::from_nanos(avg_beta as u64)
+//             );
+//             println!(
+//                 "Gamma avg: {:?}",
+//                 std::time::Duration::from_nanos(avg_gamma as u64)
+//             );
 
 //             println!("\n--- Relative Performance ---");
 //             println!("Beta vs Alpha:  {:.2}x", avg_beta as f64 / avg_alpha as f64);
 //             println!("Gamma vs Beta:  {:.2}x", avg_gamma as f64 / avg_beta as f64);
-//             println!("Gamma vs Alpha: {:.2}x", avg_gamma as f64 / avg_alpha as f64);
-//         },
+//             println!(
+//                 "Gamma vs Alpha: {:.2}x",
+//                 avg_gamma as f64 / avg_alpha as f64
+//             );
+//         }
 //         Err(e) => {
 //             println!("Unsuccessful error {:?}", e);
 //         }
