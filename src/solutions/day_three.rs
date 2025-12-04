@@ -1,8 +1,8 @@
 use std::{error::Error, fs};
-const BANK:usize = 100;
-const BASE:usize = 12;
+const BANK: usize = 100;
+const BASE: usize = 12;
 
-pub fn parser(path:&str) -> Result<Vec<[u8;BANK]>, Box<dyn Error>> {
+pub fn parser(path: &str) -> Result<Vec<[u8; BANK]>, Box<dyn Error>> {
     let mut nums = vec![];
     let batteries = BANK;
     let contents = match fs::read_to_string(path) {
@@ -10,15 +10,15 @@ pub fn parser(path:&str) -> Result<Vec<[u8;BANK]>, Box<dyn Error>> {
         Err(e) => return Err(format!("Invalid Path {}", e).into()),
     };
     for (line_no, line) in contents.lines().enumerate() {
-        let mut volts:[u8;BANK] = [0;BANK];
+        let mut volts: [u8; BANK] = [0; BANK];
         if line.len() > batteries {
-            return Err(format!("Line not BANK chars {}", line_no + 1).into())
+            return Err(format!("Line not BANK chars {}", line_no + 1).into());
         }
         for (idx, ch) in line.chars().enumerate() {
             if let Some(d) = ch.to_digit(10) {
                 volts[idx] = d as u8;
             } else {
-                return Err(format!("Invalid base 10 voltage").into())
+                return Err(format!("Invalid base 10 voltage").into());
             }
         }
         nums.push(volts);
@@ -26,7 +26,7 @@ pub fn parser(path:&str) -> Result<Vec<[u8;BANK]>, Box<dyn Error>> {
     Ok(nums)
 }
 
-pub fn alpha_max_voltage(racks:&[[u8;BANK]]) -> u64 {
+pub fn alpha_max_voltage(racks: &[[u8; BANK]]) -> u64 {
     let mut secret = 0;
     for r in racks {
         let mut max_volt = 0;
@@ -45,13 +45,17 @@ pub fn alpha_max_voltage(racks:&[[u8;BANK]]) -> u64 {
     secret
 }
 
-pub fn beta_max_voltage(racks:&[[u8;BANK]]) -> u64 {
+pub fn beta_max_voltage(racks: &[[u8; BANK]]) -> u64 {
     let mut secret = 0;
     for r in racks {
-        let mut positions:[usize; BASE] = std::array::from_fn(|i| BANK - 1 - i);
-        let mut voltages:[u8; BASE] = [0;BASE];
+        let mut positions: [usize; BASE] = std::array::from_fn(|i| BANK - 1 - i);
+        let mut voltages: [u8; BASE] = [0; BASE];
         for i in (0..BASE).rev() {
-            let start = if i == BASE - 1 { 0 } else { positions[i+1] + 1 };
+            let start = if i == BASE - 1 {
+                0
+            } else {
+                positions[i + 1] + 1
+            };
             let end = positions[i];
             for j in start..=end {
                 if r[j] > voltages[i] {
@@ -65,7 +69,6 @@ pub fn beta_max_voltage(racks:&[[u8;BANK]]) -> u64 {
         for v in voltages {
             total_volts += v as u64 * b_ten;
             b_ten *= 10;
-
         }
         secret += total_volts;
     }
@@ -83,5 +86,5 @@ pub fn beta_max_voltage(racks:&[[u8;BANK]]) -> u64 {
 //             println!("Unsuccessful error {:?}", e);
 //         }
 //     }
-    
+
 // }

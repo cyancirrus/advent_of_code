@@ -29,7 +29,9 @@ impl Primes {
             let mut is_prime = true;
             let sqrt_n = (n as f64).sqrt() as usize;
             for &p in primes.iter() {
-                if p > sqrt_n { break; }
+                if p > sqrt_n {
+                    break;
+                }
                 if n % p == 0 {
                     is_prime = false;
                     break;
