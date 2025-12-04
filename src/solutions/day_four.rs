@@ -146,21 +146,24 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
         (0, -1),
     ];
 
-    let mut stack = BTreeSet::new();
+    let mut stack = vec![];
+    let mut in_flight = vec![vec![false;n as usize];m as usize];
     for i in 0..m {
         for j in 0..n {
             if grid[i as usize][j as usize] == 1 {
-                stack.insert((i, j));
+                stack.push((i, j));
+                in_flight[i as usize][j as usize] = true;
             }
         }
     }
 
     // depth first or breadth first will work
-    while let Some((x, y)) = stack.pop_first() {
+    while let Some((x, y)) = stack.pop() {
         // could do like the like overflow sub trick but this is fine just noop casts
         if grid[x as usize][y as usize] == 0 {
             continue;
         }
+        in_flight[x as usize][y as usize] = false;
         let mut neighbors = 0;
         for (dx, dy) in directions {
             let (nx, ny) = (x as isize + dx, y as isize + dy);
@@ -173,8 +176,8 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
             nodes += 1;
             for (dx, dy) in directions {
                 let (nx, ny) = (x as isize + dx, y as isize + dy);
-                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] == 1 {
-                    stack.insert((nx, ny));
+                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] == 1 && !in_flight[nx as usize][ny as usize]{
+                    stack.push((nx, ny));
                 }
             }
         }
@@ -182,9 +185,7 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     nodes
 }
 
-// // Should use the beta version, btreeset while having remove would need to do something quicker
-// // could use a like dict with a 1,0 and check if it's 1,0 and if it's 0 insert into queue
-// // but that's overengineered and like simple continue is quicker
+
 // fn main() {
 //     let num_parse = parser("./data/day_4.txt");
 //     match num_parse {
