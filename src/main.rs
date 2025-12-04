@@ -5,6 +5,9 @@ use std::{error::Error, fs};
 use std::mem;
 use advent_of_code::solutions::day_four::{parser, alpha_neighbor_parse, beta_neighbor_parse, gamma_neighbor_parse};
 
+// Should use the beta version, btreeset while having remove would need to do something quicker
+// could use a like dict with a 1,0 and check if it's 1,0 and if it's 0 insert into queue
+// but that's overengineered and like simple continue is quicker
 
 fn main() {
     let num_parse = parser("./data/day_4.txt");
