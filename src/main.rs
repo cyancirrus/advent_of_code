@@ -1,138 +1,91 @@
 #![allow(dead_code, unused)]
+use std::collections::VecDeque;
 use std::{error::Error, fs};
+use std::mem;
 
-struct Primes {
-    primes: Vec<usize>,
-    max_checked: usize,
-}
+const BANK:usize = 100;
+const BASE:usize = 12;
 
-impl Primes {
-    pub fn new(n: usize) -> Primes {
-        let mut primes = vec![2];
-        Primes::extender(3, n, &mut primes);
-        Primes {
-            primes,
-            max_checked: n,
-        }
-    }
-
-    pub fn ensure(&mut self, n: usize) {
-        if n < self.max_checked {
-            return;
-        }
-        Self::extender(self.max_checked, n, &mut self.primes);
-        self.max_checked = n;
-    }
-
-    fn extender(begin: usize, end: usize, primes: &mut Vec<usize>) {
-        for n in (begin..=end).step_by(2) {
-            let mut is_prime = true;
-            let sqrt_n = (n as f64).sqrt() as usize;
-            for &p in primes.iter() {
-                if p > sqrt_n { break; }
-                if n % p == 0 {
-                    is_prime = false;
-                    break;
-                }
-            }
-            if is_prime {
-                primes.push(n);
-            }
-        }
-    }
-}
-
-pub fn parser(path: &str) -> Result<Vec<(usize, usize)>, Box<dyn Error>> {
+pub fn parser(path:&str) -> Result<Vec<[u8;BANK]>, Box<dyn Error>> {
+    let mut nums = vec![];
+    let batteries = BANK;
     let contents = match fs::read_to_string(path) {
         Ok(p) => p,
         Err(e) => return Err(format!("Invalid Path {}", e).into()),
     };
-    let mut codes = Vec::new();
-    for line in contents.lines() {
-        if line.trim().is_empty() {
-            continue;
+    for (line_no, line) in contents.lines().enumerate() {
+        let mut volts:[u8;BANK] = [0;BANK];
+        if line.len() > batteries {
+            return Err(format!("Line not BANK chars {}", line_no + 1).into())
         }
-        let (left, right) = line.split_once("-").ok_or("Invalid split for line code")?;
-        match (left.parse(), right.parse()) {
-            (Ok(l), Ok(r)) => codes.push((l, r)),
-            _ => return Err(format!("Invalid Code into integer").into()),
+        for (idx, ch) in line.chars().enumerate() {
+            if let Some(d) = ch.to_digit(10) {
+                volts[idx] = d as u8;
+            } else {
+                return Err(format!("Invalid base 10 voltage").into())
+            }
         }
+        nums.push(volts);
     }
-    Ok(codes)
+    Ok(nums)
 }
 
-fn validate_codes_alpha(codes: &[(usize, usize)]) -> usize {
-    let mut sum_invalid_codes = 0;
-    for &(left, right) in codes {
-        for num in left..=right {
-            debug_assert!(
-                usize::MAX - num > sum_invalid_codes,
-                "overflow increase integer precision"
-            );
-            let n_str = num.to_string();
-            let n_len = n_str.len();
-            if n_len & 1 == 0 {
-                if &n_str[0..n_len / 2] == &n_str[n_len / 2..] {
-                    sum_invalid_codes += num;
+pub fn alpha_max_voltage(racks:&[[u8;BANK]]) -> u64 {
+    let mut secret = 0;
+    for r in racks {
+        let mut max_volt = 0;
+        let mut d1 = r[0];
+        for &n in &r[1..] {
+            let cur = d1 * 10 + n;
+            if cur > max_volt {
+                max_volt = cur;
+            }
+            if n > d1 {
+                d1 = n;
+            }
+        }
+        secret += max_volt as u64
+    }
+    secret
+}
+
+pub fn beta_max_voltage(racks:&[[u8;BANK]]) -> u64 {
+    let mut secret = 0;
+    for r in racks {
+        let mut positions:[usize; BASE] = std::array::from_fn(|i| BANK - 1 - i);
+        let mut voltages:[u8; BASE] = [0;BASE];
+        for i in (0..BASE).rev() {
+            let mut start = if i == BASE - 1 { 0 } else { positions[i+1] + 1 };
+            let mut end = positions[i];
+            for j in start..=end {
+                if r[j] > voltages[i] {
+                    positions[i] = j;
+                    voltages[i] = r[j];
                 }
             }
         }
-    }
-    sum_invalid_codes
-}
+        let mut total_volts = 0;
+        let mut b_ten = 1;
+        for v in voltages {
+            total_volts += v as u64 * b_ten;
+            b_ten *= 10;
 
-fn validate_codes_beta(codes: &[(usize, usize)], primes: &mut Primes) -> usize {
-    let mut sum_invalid_codes = 0;
-    for &(left, right) in codes {
-        primes.ensure(right.to_string().len() as usize);
-        for num in left..=right {
-            debug_assert!(
-                usize::MAX - num > sum_invalid_codes,
-                "overflow increase integer precision"
-            );
-            // could make a buffer to reuse as this is heavy
-            let n_str = num.to_string();
-            let n_len = n_str.len();
-            let mut i = 0;
-            let mut is_repeated = true;
-            while n_len / primes.primes[i] > 0 {
-                let pattern_len = n_len / primes.primes[i];
-                i += 1;
-                if n_len % pattern_len != 0 {
-                    continue;
-                }
-                let mut pattern = &n_str[0..pattern_len];
-                let mut all_match = true;
-                for chunk_start in (pattern_len..n_len).step_by(pattern_len) {
-                    if &n_str[chunk_start..chunk_start + pattern_len] != pattern {
-                        all_match = false;
-                        break;
-                    }
-                }
-                if all_match {
-                    sum_invalid_codes += num;
-                    break;
-                }
-            }
         }
+        secret += total_volts;
     }
-    sum_invalid_codes
+    secret
 }
 
 fn main() {
-    let code_parse = parser("./data/day_2.txt");
-    let mut primes = Primes::new(13);
-    println!("primes {:?}", primes.primes);
-    match code_parse {
-        Ok(codes) => {
-            println!("Alpha Validate Codes {}", validate_codes_alpha(&codes));
-            println!(
-                "Beta Validate Codes {}",
-                validate_codes_beta(&codes, &mut primes)
-            );
-        }
+    let mut num_parse = parser("./data/day_3.txt");
+    match num_parse {
+        Ok(bats) => {
+            println!("Alpha version {}", alpha_max_voltage(&bats));
+            println!("Beta version {}", beta_max_voltage(&bats));
+        },
         Err(e) => {
-            println!("unsuccessful parse {}", e);
+            println!("Unsuccessful error {:?}", e);
         }
     }
+    
 }
