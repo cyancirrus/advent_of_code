@@ -21,8 +21,10 @@ pub fn parser(path: &str) -> Result<Vec<Vec<bool>>, Box<dyn Error>> {
                 return Err(format!("Impropper length found index {i}").into());
             }
             match ch {
-                '@' => { encoding[i] = true; },
-                '.' => {},
+                '@' => {
+                    encoding[i] = true;
+                }
+                '.' => {}
                 _ => return Err(format!("Symbol not expected returning error").into()),
             }
         }
@@ -41,7 +43,9 @@ pub fn alpha_neighbor_parse(grid: &[Vec<bool>]) -> usize {
 
     for x in 0..m {
         for y in 0..n {
-            if !grid[x as usize][y as usize] { continue; }
+            if !grid[x as usize][y as usize] {
+                continue;
+            }
             // could do like the like overflow sub trick but this is fine just a bit of casts which
             // turn into no ops
             let mut neighbors = 0;
@@ -98,11 +102,13 @@ pub fn beta_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     // depth first or breadth first will work
     while let Some((x, y)) = stack.pop() {
         // could do like the like overflow sub trick but this is fine just noop casts
-        if !grid[x as usize][y as usize] { continue; }
+        if !grid[x as usize][y as usize] {
+            continue;
+        }
         let mut neighbors = 0;
         for (dx, dy) in directions {
             let (nx, ny) = (x.wrapping_add(dx), y.wrapping_add(dy));
-            if  nx < m &&  ny < n {
+            if nx < m && ny < n {
                 neighbors += grid[nx as usize][ny as usize] as usize;
             }
         }
@@ -139,7 +145,7 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     ];
 
     let mut stack = vec![];
-    let mut in_flight = vec![vec![false;n as usize];m as usize];
+    let mut in_flight = vec![vec![false; n as usize]; m as usize];
     for i in 0..m {
         for j in 0..n {
             if grid[i as usize][j as usize] {
@@ -152,7 +158,9 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     // depth first or breadth first will work
     while let Some((x, y)) = stack.pop() {
         // could do like the like overflow sub trick but this is fine just noop casts
-        if !grid[x as usize][y as usize] { continue; }
+        if !grid[x as usize][y as usize] {
+            continue;
+        }
         in_flight[x as usize][y as usize] = false;
         let mut neighbors = 0;
         for (dx, dy) in directions {
@@ -166,7 +174,13 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
             nodes += 1;
             for (dx, dy) in directions {
                 let (nx, ny) = (x as isize + dx, y as isize + dy);
-                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] && !in_flight[nx as usize][ny as usize]{
+                if 0 <= nx
+                    && nx < m
+                    && 0 <= ny
+                    && ny < n
+                    && grid[nx as usize][ny as usize]
+                    && !in_flight[nx as usize][ny as usize]
+                {
                     stack.push((nx, ny));
                 }
             }
@@ -174,7 +188,6 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     }
     nodes
 }
-
 
 // fn main() {
 //     let num_parse = parser("./data/day_4.txt");
