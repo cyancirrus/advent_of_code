@@ -65,11 +65,15 @@ pub fn beta_max_voltage(racks: &[[u8; BANK]]) -> u64 {
             }
         }
         let mut total_volts = 0;
-        let mut b_ten = 1;
-        for v in voltages {
-            total_volts += v as u64 * b_ten;
-            b_ten *= 10;
+        // note can use rolling hash
+        for &v in voltages.iter().rev() {
+            total_volts = total_volts * 10 + v as u64;
         }
+        // let mut b_ten = 1;
+        // for v in voltages {
+        //     total_volts += v as u64 * b_ten;
+        //     b_ten *= 10;
+        // }
         secret += total_volts;
     }
     secret
