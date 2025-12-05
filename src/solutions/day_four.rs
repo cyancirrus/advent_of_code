@@ -6,7 +6,7 @@ use std::{error::Error, fs};
 
 const WIDTH: usize = 137;
 
-pub fn parser(path: &str) -> Result<Vec<Vec<i8>>, Box<dyn Error>> {
+pub fn parser(path: &str) -> Result<Vec<Vec<bool>>, Box<dyn Error>> {
     let mut grid = Vec::new();
     let content = match fs::read_to_string(path) {
         Ok(lines) => lines,
@@ -15,18 +15,14 @@ pub fn parser(path: &str) -> Result<Vec<Vec<i8>>, Box<dyn Error>> {
 
     for line in content.lines() {
         // adding padding
-        let mut encoding: Vec<i8> = vec![0; WIDTH];
+        let mut encoding: Vec<bool> = vec![false; WIDTH];
         for (i, ch) in line.chars().enumerate() {
             if i > WIDTH {
                 return Err(format!("Impropper length found index {i}").into());
             }
             match ch {
-                '@' => {
-                    encoding[i] = 1;
-                }
-                '.' => {
-                    encoding[i] = 0;
-                }
+                '@' => { encoding[i] = true; },
+                '.' => {},
                 _ => return Err(format!("Symbol not expected returning error").into()),
             }
         }
@@ -35,7 +31,7 @@ pub fn parser(path: &str) -> Result<Vec<Vec<i8>>, Box<dyn Error>> {
     Ok(grid)
 }
 
-pub fn alpha_neighbor_parse(grid: &[Vec<i8>]) -> usize {
+pub fn alpha_neighbor_parse(grid: &[Vec<bool>]) -> usize {
     let mut nodes = 0;
     let threshold = 4;
     if grid.is_empty() || grid[0].is_empty() {
@@ -45,9 +41,7 @@ pub fn alpha_neighbor_parse(grid: &[Vec<i8>]) -> usize {
 
     for x in 0..m {
         for y in 0..n {
-            if grid[x as usize][y as usize] == 0 {
-                continue;
-            }
+            if !grid[x as usize][y as usize] { continue; }
             // could do like the like overflow sub trick but this is fine just a bit of casts which
             // turn into no ops
             let mut neighbors = 0;
@@ -63,7 +57,7 @@ pub fn alpha_neighbor_parse(grid: &[Vec<i8>]) -> usize {
             ] {
                 let (nx, ny) = (x as isize + dx, y as isize + dy);
                 if 0 <= nx && nx < m && 0 <= ny && ny < n {
-                    neighbors += grid[nx as usize][ny as usize];
+                    neighbors += grid[nx as usize][ny as usize] as usize;
                 }
             }
             if neighbors < threshold {
@@ -74,28 +68,28 @@ pub fn alpha_neighbor_parse(grid: &[Vec<i8>]) -> usize {
     nodes
 }
 
-pub fn beta_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
+pub fn beta_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     let mut nodes = 0;
     let threshold = 4;
     if grid.is_empty() || grid[0].is_empty() {
         return 0;
     }
-    let (m, n) = (grid.len() as isize, grid[0].len() as isize);
+    let (m, n) = (grid.len(), grid[0].len());
     let directions = [
-        (-1, -1),
-        (-1, 0),
-        (-1, 1),
+        (!0, !0),
+        (!0, 0),
+        (!0, 1),
         (0, 1),
         (1, 1),
         (1, 0),
-        (1, -1),
-        (0, -1),
+        (1, !0),
+        (0, !0),
     ];
 
     let mut stack = vec![];
     for i in 0..m {
         for j in 0..n {
-            if grid[i as usize][j as usize] == 1 {
+            if grid[i as usize][j as usize] {
                 stack.push((i, j));
             }
         }
@@ -104,22 +98,20 @@ pub fn beta_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     // depth first or breadth first will work
     while let Some((x, y)) = stack.pop() {
         // could do like the like overflow sub trick but this is fine just noop casts
-        if grid[x as usize][y as usize] == 0 {
-            continue;
-        }
+        if !grid[x as usize][y as usize] { continue; }
         let mut neighbors = 0;
         for (dx, dy) in directions {
-            let (nx, ny) = (x as isize + dx, y as isize + dy);
-            if 0 <= nx && nx < m && 0 <= ny && ny < n {
-                neighbors += grid[nx as usize][ny as usize];
+            let (nx, ny) = (x.wrapping_add(dx), y.wrapping_add(dy));
+            if  nx < m &&  ny < n {
+                neighbors += grid[nx as usize][ny as usize] as usize;
             }
         }
         if neighbors < threshold {
-            grid[x as usize][y as usize] = 0;
+            grid[x as usize][y as usize] = false;
             nodes += 1;
             for (dx, dy) in directions {
-                let (nx, ny) = (x as isize + dx, y as isize + dy);
-                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] == 1 {
+                let (nx, ny) = (x.wrapping_add(dx), y.wrapping_add(dy));
+                if nx < m && ny < n && grid[nx][ny] {
                     stack.push((nx, ny));
                 }
             }
@@ -128,7 +120,7 @@ pub fn beta_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     nodes
 }
 
-pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
+pub fn gamma_neighbor_parse(grid: &mut [Vec<bool>]) -> usize {
     let mut nodes = 0;
     let threshold = 4;
     if grid.is_empty() || grid[0].is_empty() {
@@ -150,7 +142,7 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     let mut in_flight = vec![vec![false;n as usize];m as usize];
     for i in 0..m {
         for j in 0..n {
-            if grid[i as usize][j as usize] == 1 {
+            if grid[i as usize][j as usize] {
                 stack.push((i, j));
                 in_flight[i as usize][j as usize] = true;
             }
@@ -160,23 +152,21 @@ pub fn gamma_neighbor_parse(grid: &mut [Vec<i8>]) -> usize {
     // depth first or breadth first will work
     while let Some((x, y)) = stack.pop() {
         // could do like the like overflow sub trick but this is fine just noop casts
-        if grid[x as usize][y as usize] == 0 {
-            continue;
-        }
+        if !grid[x as usize][y as usize] { continue; }
         in_flight[x as usize][y as usize] = false;
         let mut neighbors = 0;
         for (dx, dy) in directions {
             let (nx, ny) = (x as isize + dx, y as isize + dy);
             if 0 <= nx && nx < m && 0 <= ny && ny < n {
-                neighbors += grid[nx as usize][ny as usize];
+                neighbors += grid[nx as usize][ny as usize] as usize;
             }
         }
         if neighbors < threshold {
-            grid[x as usize][y as usize] = 0;
+            grid[x as usize][y as usize] = false;
             nodes += 1;
             for (dx, dy) in directions {
                 let (nx, ny) = (x as isize + dx, y as isize + dy);
-                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] == 1 && !in_flight[nx as usize][ny as usize]{
+                if 0 <= nx && nx < m && 0 <= ny && ny < n && grid[nx as usize][ny as usize] && !in_flight[nx as usize][ny as usize]{
                     stack.push((nx, ny));
                 }
             }
