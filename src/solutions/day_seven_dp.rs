@@ -3,13 +3,13 @@ use std::fmt;
 use std::mem;
 use std::{error::Error, fs};
 
-pub fn parser(path:&str) -> Result<(Vec<usize>,Vec<Vec<bool>>), Box<dyn Error>> {
+pub fn parser(path: &str) -> Result<(Vec<usize>, Vec<Vec<bool>>), Box<dyn Error>> {
     let mut engine = vec![];
     let mut initials = vec![];
 
     let content = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(e) => return Err(("Path {path:?} does not exist").into()),
+        Err(e) => return Err(format!("Path {path:?} does not exist").into()),
     };
     let mut lines = content.lines();
     let mut length = 0;
@@ -19,10 +19,10 @@ pub fn parser(path:&str) -> Result<(Vec<usize>,Vec<Vec<bool>>), Box<dyn Error>> 
             match b {
                 b'S' => {
                     initials.push(i);
-                    break;
-                },
+                    continue;
+                }
                 b'.' => continue,
-                _ => return Err(("Unexpected symbol {b}").into()),
+                _ => return Err(format!("Unexpected symbol {b}").into()),
             }
         }
     }
@@ -32,22 +32,24 @@ pub fn parser(path:&str) -> Result<(Vec<usize>,Vec<Vec<bool>>), Box<dyn Error>> 
             match b {
                 b'^' => {
                     splits[i] = true;
-                },
+                }
                 b'.' => continue,
-                _ => return Err(("Unexpected symbol {b}").into()),
+                _ => return Err(format!("Unexpected symbol {b}").into()),
             }
         }
         engine.push(splits);
     }
-     Ok((initials, engine))
+    Ok((initials, engine))
 }
 
-pub fn beta_tachyon_many_worlds(mut active:Vec<usize>, splits:&[Vec<bool>]) -> u64 {
-    if splits.is_empty() || splits[0].is_empty() { return 0; }
+pub fn beta_tachyon_many_worlds(mut active: Vec<usize>, splits: &[Vec<bool>]) -> u64 {
+    if splits.is_empty() || splits[0].is_empty() {
+        return 0;
+    }
     let length = splits[0].len();
     let mut count = 0;
     let mut next = vec![];
-    let mut freqs= vec![0; length];
+    let mut freqs = vec![0; length];
     let neighs = [!0, 1];
     for &i in active.iter() {
         freqs[i] = 1;
@@ -75,7 +77,7 @@ pub fn beta_tachyon_many_worlds(mut active:Vec<usize>, splits:&[Vec<bool>]) -> u
         mem::swap(&mut active, &mut next);
     }
     for x in active {
-        count += freqs[x]; 
+        count += freqs[x];
     }
     count
 }

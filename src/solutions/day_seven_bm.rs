@@ -189,9 +189,8 @@ pub fn parser(path: &str) -> Result<Tachyon, Box<dyn Error>> {
             match b {
                 b'^' => {
                     bitmask.initialize(p);
-                    counter +=1;
+                    counter += 1;
                 }
-                ,
                 b'.' => continue,
                 _ => return Err(("Unexpected symbol {b}").into()),
             }
