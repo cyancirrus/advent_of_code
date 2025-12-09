@@ -1,16 +1,14 @@
 #![allow(dead_code, unused)]
 use rand::Rng;
-use rand::distr::StandardUniform;
-use rand_distr::StandardNormal;
-use std::collections::HashMap;
-use std::fmt;
 use std::mem;
+use rand::distr::StandardUniform;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::{error::Error, fs};
 
 const CARDINALITY: usize = 3;
-const EPSILON: f32 = 1e-6;
-const CLUSTER_PRODUCT_THRESHOLD:usize = 3;
+// const EPSILON: f32 = 1e-6;
+const CLUSTER_PRODUCT_THRESHOLD: usize = 3;
 
 type Coord = [f32; CARDINALITY];
 type ProjHash = HashMap<u32, Vec<(usize, Arc<Coord>)>>;
@@ -75,7 +73,7 @@ impl UnionFind {
             self.find(n);
         }
     }
-    fn union(&mut self, a:usize, b:usize) {
+    fn union(&mut self, a: usize, b: usize) {
         let root_a = self.find(a);
         let root_b = self.find(b);
         if root_a != root_b {
@@ -116,9 +114,7 @@ impl LshKNearestNeighbors {
         let arc_coord = Arc::new(coord);
         for i in 0..self.p_card {
             let hash = self.proj[i].project(&arc_coord);
-            (self.pmap[i].entry(hash).or_default())
-                .push((idx, arc_coord.clone()))
-                .clone();
+            (self.pmap[i].entry(hash).or_default()).push((idx, arc_coord.clone()));
         }
         self.n_elem += 1;
     }
@@ -137,7 +133,8 @@ impl LshKNearestNeighbors {
         similar.truncate(k);
         similar
     }
-    fn one_nearest(&self, unions:&mut UnionFind, coord: &Coord, c_idx:usize) -> (usize, f32) {
+
+    fn one_nearest(&self, unions: &mut UnionFind, coord: &Coord, c_idx: usize) -> (usize, f32) {
         let mut closest = (usize::MAX, f32::MAX);
         for i in 0..self.p_card {
             let hash = self.proj[i].project(coord);
@@ -175,11 +172,80 @@ fn alpha_determine_circuit(
     coords: &[Coord],
     steps: usize,
 ) -> u64 {
+    if knn.n_elem == 0 || coords.is_empty() {
+        return 0;
+    }
+    
+    let n = coords.len();
+    let mut used_pairs = std::collections::HashSet::new();
+    
+    for s in 0..steps {
+        let mut min_distance = f32::MAX;
+        let (mut base, mut target) = (usize::MAX, usize::MAX);
+        
+        for base_idx in 0..n {
+            for target_idx in (base_idx + 1)..n {
+                let pair = if base_idx < target_idx {
+                    (base_idx, target_idx)
+                } else {
+                    (target_idx, base_idx)
+                };
+                
+                if used_pairs.contains(&pair) {
+                    continue;
+                }
+                
+                let dist = distance_coords(&coords[base_idx], &coords[target_idx]);
+                if dist < min_distance {
+                    min_distance = dist;
+                    base = base_idx;
+                    target = target_idx;
+                }
+            }
+        }
+        
+        if base == usize::MAX {
+            break;
+        }
+        
+        let pair = if base < target { (base, target) } else { (target, base) };
+        used_pairs.insert(pair);
+        
+        // Union them (even if already in same circuit, this counts as a step)
+        let root_base = unions.find(base);
+        let root_target = unions.find(target);
+        if root_base != root_target {
+            unions.union(root_base, root_target);
+        }
+    }
+    
+    unions.finalize();
+    let mut cluster_size = vec![0; n];
+    for &n in &unions.parents {
+        cluster_size[n] += 1;
+    }
+    cluster_size.sort_by(|a, b| b.cmp(a));
+    
+    let mut product = 1;
+    for i in 0..CLUSTER_PRODUCT_THRESHOLD {
+        product *= cluster_size[i];
+    }
+    product
+}
+
+fn alpha_determine_circuit_unique(
+    knn: &mut LshKNearestNeighbors,
+    unions: &mut UnionFind,
+    coords: &[Coord],
+    steps: usize,
+) -> u64 {
     // // knn should already be initialized
-    if knn.n_elem == 0 || coords.is_empty() { return 0; }
+    if knn.n_elem == 0 || coords.is_empty() {
+        return 0;
+    }
     let mut product = 1;
     let n = coords.len();
-    for s in 0..steps - 1 {
+    for s in 0..steps {
         let mut min_distance = f32::MAX;
         let (mut base, mut target) = (usize::MAX, usize::MAX);
         for (base_idx, candidate) in coords.iter().enumerate() {
@@ -206,6 +272,65 @@ fn alpha_determine_circuit(
     product
 }
 
+fn beta_determine_circuit(coords: &[Coord]) -> u64 {
+    if coords.is_empty() {
+        return 0;
+    }
+    
+    let n = coords.len();
+    let mut unions = UnionFind::new(n);
+    let mut used_pairs = std::collections::HashSet::new();
+    
+    loop {
+        let mut min_distance = f32::MAX;
+        let (mut base, mut target) = (usize::MAX, usize::MAX);
+        
+        for base_idx in 0..n {
+            for target_idx in (base_idx + 1)..n {
+                let pair = (base_idx.min(target_idx), base_idx.max(target_idx));
+                
+                if used_pairs.contains(&pair) {
+                    continue;
+                }
+                
+                let dist = distance_coords(&coords[base_idx], &coords[target_idx]);
+                if dist < min_distance {
+                    min_distance = dist;
+                    base = base_idx;
+                    target = target_idx;
+                }
+            }
+        }
+        
+        if base == usize::MAX {
+            break;
+        }
+        
+        let pair = (base.min(target), base.max(target));
+        used_pairs.insert(pair);
+        
+        let root_base = unions.find(base);
+        let root_target = unions.find(target);
+        
+        if root_base != root_target {
+            unions.union(root_base, root_target);
+            
+            // Check if we now have only one component
+            unions.finalize();
+            let unique_roots: std::collections::HashSet<_> = 
+                (0..n).map(|i| unions.find(i)).collect();
+            
+            if unique_roots.len() == 1 {
+                // This connection completed the circuit!
+                println!("Final connection: {:?} and {:?}", coords[base], coords[target]);
+                return (coords[base][0] * coords[target][0]).floor() as u64;
+            }
+        }
+    }
+    
+    0
+}
+
 fn main() {
     let coords = parser("./data/day_8.txt");
 
@@ -214,17 +339,11 @@ fn main() {
             let n = c.len();
             let mut union = UnionFind::new(n);
             // let mut knn = LshKNearestNeighbors::new(200f32, 10_000);
-            let mut knn = LshKNearestNeighbors::new(1000.0, 6);
+            let mut knn = LshKNearestNeighbors::new(10_000.0, 12);
             for c_idx in 0..n {
                 knn.insert(c_idx, c[c_idx])
-
             }
-            let result = alpha_determine_circuit(
-                &mut knn,
-                &mut union,
-                &c,
-                10,
-            );
+            let result = beta_determine_circuit( &c);
             println!("Alpha result {}", result);
         }
         _ => {
