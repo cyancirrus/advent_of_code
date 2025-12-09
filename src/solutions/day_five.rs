@@ -5,8 +5,8 @@ use std::time::Instant;
 use std::{error::Error, fs};
 
 pub fn parser_ranges(path: &str) -> Result<Vec<(u64, u64)>, Box<dyn Error>> {
-    let mut ranges = vec![]; 
-    let content = match fs::read_to_string(path)  {
+    let mut ranges = vec![];
+    let content = match fs::read_to_string(path) {
         Ok(c) => c,
         Err(e) => return Err(("Invalid path {path:?}").into()),
     };
@@ -22,7 +22,7 @@ pub fn parser_ranges(path: &str) -> Result<Vec<(u64, u64)>, Box<dyn Error>> {
 }
 
 pub fn parser_items(path: &str) -> Result<Vec<u64>, Box<dyn Error>> {
-    let mut items = vec![]; 
+    let mut items = vec![];
     let content = match fs::read_to_string(path) {
         Ok(c) => c,
         Err(e) => return Err(("Invalid path for items {path:?}").into()),
@@ -42,8 +42,8 @@ pub fn parser_items(path: &str) -> Result<Vec<u64>, Box<dyn Error>> {
 // could collapse the ranges into discrete sections
 // sorting and then counting seems best
 // want to see the hard problem prior to implementing binary heap
-pub fn alpha_number_fresh(ranges:&[(u64,u64)], items:&[u64]) -> u64 {
-    // Brute force 
+pub fn alpha_number_fresh(ranges: &[(u64, u64)], items: &[u64]) -> u64 {
+    // Brute force
     let mut count = 0;
     for &i in items {
         let mut found = false;
@@ -58,19 +58,18 @@ pub fn alpha_number_fresh(ranges:&[(u64,u64)], items:&[u64]) -> u64 {
     count
 }
 
-
 // Better version
 // 1. sort by left
 // don't really even have to merge can just sort and scan
 
-pub fn gamma_number_fresh(ranges:&mut [(u64,u64)], items:&mut [u64]) -> u64 {
+pub fn gamma_number_fresh(ranges: &mut [(u64, u64)], items: &mut [u64]) -> u64 {
     let mut count = 0;
     ranges.sort_by(|a, b| a.0.cmp(&b.0));
     items.sort_by(|a, b| a.cmp(&b));
     let (mut i_idx, mut r_idx) = (0, 0);
     while r_idx < ranges.len() && i_idx < items.len() {
-        if items[i_idx]  < ranges[r_idx].0 {
-            i_idx +=1;
+        if items[i_idx] < ranges[r_idx].0 {
+            i_idx += 1;
         } else if items[i_idx] <= ranges[r_idx].1 {
             count += 1;
             i_idx += 1;
@@ -81,9 +80,10 @@ pub fn gamma_number_fresh(ranges:&mut [(u64,u64)], items:&mut [u64]) -> u64 {
     count
 }
 
-
-pub fn beta_number_fresh(ranges:&mut [(u64, u64)]) -> u64 {
-    if ranges.is_empty() { return 0; }
+pub fn beta_number_fresh(ranges: &mut [(u64, u64)]) -> u64 {
+    if ranges.is_empty() {
+        return 0;
+    }
     let mut count = 0;
     ranges.sort_by(|a, b| a.0.cmp(&b.0));
     let (mut left, mut right) = ranges[0];

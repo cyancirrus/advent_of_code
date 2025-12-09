@@ -5,17 +5,17 @@ use std::{error::Error, fs};
 const INPUT_CARD: usize = 4;
 
 #[derive(Debug)]
-enum Opperation {
+pub enum Opperation {
     Product,
     Summand,
 }
 #[derive(Debug)]
-struct Problem {
+pub struct Problem {
     op: Opperation,
     nums: Vec<u64>,
 }
 
-fn parser_alpha(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
+pub fn parser_alpha(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
     let content = match fs::read_to_string(path) {
         Ok(c) => c,
         Err(e) => return Err(("Path: {path:?} does not exist").into()),
@@ -96,7 +96,7 @@ fn parser_beta(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
     }
     Ok(problems)
 }
-fn evaluate_squid_math(problems: &[Problem]) -> u64 {
+pub fn evaluate_squid_math(problems: &[Problem]) -> u64 {
     let mut result = 0;
     for p in problems {
         match p.op {
@@ -121,23 +121,23 @@ fn evaluate_squid_math(problems: &[Problem]) -> u64 {
     result
 }
 
-fn main() {
-    let probs = parser_alpha("./data/day_6.txt");
-    match probs {
-        Ok(p) => {
-            println!("Alpha squid result {}", evaluate_squid_math(&p));
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-    let probs = parser_beta("./data/day_6.txt");
-    match probs {
-        Ok(p) => {
-            println!("Beta squid result {}", evaluate_squid_math(&p));
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-}
+// fn main() {
+//     let probs = parser_alpha("./data/day_6.txt");
+//     match probs {
+//         Ok(p) => {
+//             println!("Alpha squid result {}", evaluate_squid_math(&p));
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+//     let probs = parser_beta("./data/day_6.txt");
+//     match probs {
+//         Ok(p) => {
+//             println!("Beta squid result {}", evaluate_squid_math(&p));
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+// }
