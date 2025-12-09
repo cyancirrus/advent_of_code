@@ -5,3 +5,4 @@ pub mod day_six;
 pub mod day_three;
 pub mod day_two;
 pub mod day_seven_bm;
+pub mod day_seven_dp;
