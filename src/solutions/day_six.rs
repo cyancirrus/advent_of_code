@@ -65,14 +65,14 @@ fn parser_beta(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
                 b' ' => {
                     length += 1;
                     continue;
-                },
+                }
                 _ => return Err(("Unexpected symbol found").into()),
             };
-            problems.push(Problem { op, nums: vec![] } );
+            problems.push(Problem { op, nums: vec![] });
             digits.push(length);
             length = 0;
         }
-            // Opperations start with index 0 -> everything shifted by 1
+        // Opperations start with index 0 -> everything shifted by 1
         digits.push(length + 1);
     };
     for line in lines {
@@ -82,7 +82,7 @@ fn parser_beta(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
         let mut d_idx = 0;
         for b in line.bytes() {
             // Opperations start with index 0 -> everything shifted by 1
-            if d_idx == digits[p_idx+1] {
+            if d_idx == digits[p_idx + 1] {
                 d_idx = 0;
                 p_idx += 1;
                 continue;
@@ -90,7 +90,9 @@ fn parser_beta(path: &str) -> Result<Vec<Problem>, Box<dyn Error>> {
             if d_idx >= problems[p_idx].nums.len() {
                 problems[p_idx].nums.push(0);
             }
-            if b != b' ' { problems[p_idx].nums[d_idx] = problems[p_idx].nums[d_idx] * 10 + (b - b'0') as u64; }
+            if b != b' ' {
+                problems[p_idx].nums[d_idx] = problems[p_idx].nums[d_idx] * 10 + (b - b'0') as u64;
+            }
             d_idx += 1;
         }
     }
