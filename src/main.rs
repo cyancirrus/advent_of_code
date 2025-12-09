@@ -10,6 +10,7 @@ use std::{error::Error, fs};
 
 const CARDINALITY: usize = 3;
 const EPSILON: f32 = 1e-6;
+const CLUSTER_PRODUCT_THRESHOLD:usize = 3;
 
 type Coord = [f32; CARDINALITY];
 type ProjHash = HashMap<u32, Vec<(usize, Arc<Coord>)>>;
@@ -168,12 +169,6 @@ pub fn parser(path: &str) -> Result<Vec<Coord>, Box<dyn Error>> {
     Ok(coords)
 }
 
-// okay to do this i mean doesn't seem like bad idea what do we do
-// we build out a hashmap which is a projection for a random based coord and bucket it by this
-// then for each of the items we would like look at the buckets and check distances between
-// elements
-
-
 fn alpha_determine_circuit(
     knn: &mut LshKNearestNeighbors,
     unions: &mut UnionFind,
@@ -198,14 +193,14 @@ fn alpha_determine_circuit(
         let root_base = unions.find(base);
         let root_target = unions.find(target);
         unions.union(root_base, root_target);
-        unions.finalize();
     }
+    unions.finalize();
     let mut cluster_size = vec![0; n];
     for &n in &unions.parents {
         cluster_size[n] += 1;
     }
     cluster_size.sort_by(|a, b| b.cmp(a));
-    for i in 0..3 {
+    for i in 0..CLUSTER_PRODUCT_THRESHOLD {
         product *= cluster_size[i];
     }
     product
