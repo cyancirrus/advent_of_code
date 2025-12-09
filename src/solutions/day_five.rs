@@ -36,12 +36,14 @@ pub fn parser_items(path: &str) -> Result<Vec<u64>, Box<dyn Error>> {
     }
     Ok(items)
 }
+
 // could just run through the number of items
 // could sort the input space and then remove the items
 // could collapse the ranges into discrete sections
 // sorting and then counting seems best
 // want to see the hard problem prior to implementing binary heap
 pub fn alpha_number_fresh(ranges:&[(u64,u64)], items:&[u64]) -> u64 {
+    // Brute force 
     let mut count = 0;
     for &i in items {
         let mut found = false;
@@ -55,6 +57,11 @@ pub fn alpha_number_fresh(ranges:&[(u64,u64)], items:&[u64]) -> u64 {
     }
     count
 }
+
+
+// Better version
+// 1. sort by left
+// don't really even have to merge can just sort and scan
 
 pub fn gamma_number_fresh(ranges:&mut [(u64,u64)], items:&mut [u64]) -> u64 {
     let mut count = 0;
@@ -75,12 +82,6 @@ pub fn gamma_number_fresh(ranges:&mut [(u64,u64)], items:&mut [u64]) -> u64 {
 }
 
 
-
-// okay glad i didn't spend time doing min heap simply want to merge like ranges
-// 1. sort by left
-// 2. merge
-// don't really even have to merge can just sort and scan
-
 pub fn beta_number_fresh(ranges:&mut [(u64, u64)]) -> u64 {
     if ranges.is_empty() { return 0; }
     let mut count = 0;
@@ -100,20 +101,17 @@ pub fn beta_number_fresh(ranges:&mut [(u64, u64)]) -> u64 {
     count + right - left + 1
 }
 
-fn main() {
-    let ranges = parser_ranges("./data/day_5_ranges.txt");
-    let items = parser_items("./data/day_5_items.txt");
-    match (ranges, items) {
-        (Ok(mut r), Ok(mut i)) => {
-            println!("Alpha Number of fresh items {}", alpha_number_fresh(&r, &i));
-            println!("Gamma Number of fresh items {}", gamma_number_fresh(&mut r, &mut i));
-            // println!("Number of fresh items {}", beta_number_fresh(&mut r));
-        },
-        _ => {
-            println!("Unexpected error n alpha_number_fresh");
-        },
-    }
-}
-
-
-
+// fn main() {
+//     let ranges = parser_ranges("./data/day_5_ranges.txt");
+//     let items = parser_items("./data/day_5_items.txt");
+//     match (ranges, items) {
+//         (Ok(mut r), Ok(mut i)) => {
+//             println!("Alpha Number of fresh items {}", alpha_number_fresh(&r, &i));
+//             println!("Gamma Number of fresh items {}", gamma_number_fresh(&mut r, &mut i));
+//             // println!("Number of fresh items {}", beta_number_fresh(&mut r));
+//         },
+//         _ => {
+//             println!("Unexpected error n alpha_number_fresh");
+//         },
+//     }
+// }

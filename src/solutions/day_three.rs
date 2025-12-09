@@ -2,6 +2,8 @@ use std::{error::Error, fs};
 const BANK: usize = 100;
 const BASE: usize = 12;
 
+// can refactor to use a monotonic queue
+
 pub fn parser(path: &str) -> Result<Vec<[u8; BANK]>, Box<dyn Error>> {
     let mut nums = vec![];
     let batteries = BANK;
