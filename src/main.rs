@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::{error::Error, fs};
 
 const CARDINALITY: usize = 3;
+const EPSILON: f32 = 1e-6;
 
 type Coord = [f32; CARDINALITY];
 type ProjHash = HashMap<u32, Vec<(usize, Arc<Coord>)>>;
@@ -53,42 +54,45 @@ struct LshKNearestNeighbors {
 fn distance_coords(x: &Coord, y: &Coord) -> f32 {
     let mut dot_product = 0f32;
     for i in 0..CARDINALITY {
-        dot_product += x[i] * y[i];
+        dot_product += (x[i] - y[i]) * (x[i] - y[i]);
     }
-    dot_product
+    dot_product.sqrt()
 }
 
 struct UnionFind {
     parents: Vec<usize>,
-    updates: Vec<usize>,
 }
 
 impl UnionFind {
     fn new(n: usize) -> UnionFind {
         UnionFind {
             parents: (0..n).collect(),
-            updates:Vec::new(),
         }
     }
     fn finalize(&mut self) {
-        while let Some(u) = self.updates.pop() {
-            self.update(u);
+        for n in 0..self.parents.len() {
+            self.find(n);
         }
     }
-    fn insert(&mut self, mut node: usize, parent: usize) {
-        self.parents[node] = parent;
-        self.updates.push(node);
-        self.update(node);
+    fn union(&mut self, a:usize, b:usize) {
+        let root_a = self.find(a);
+        let root_b = self.find(b);
+        if root_a != root_b {
+            self.parents[root_a] = root_b;
+        }
     }
-    fn update(&mut self, mut node: usize) {
+    fn find(&mut self, mut node: usize) -> usize {
+        // println!("node {node}");
         let mut ancestor = node;
         while ancestor != self.parents[ancestor] {
             ancestor = self.parents[ancestor];
         }
         while ancestor != self.parents[node] {
+            let next = self.parents[node];
             self.parents[node] = ancestor;
-            node = ancestor;
+            node = next;
         }
+        self.parents[node]
     }
 }
 
@@ -132,15 +136,14 @@ impl LshKNearestNeighbors {
         similar.truncate(k);
         similar
     }
-    fn one_nearest(&self, coord: &Coord) -> (usize, f32, Arc<Coord>) {
-        let mut min_distance = f32::MAX;
-        let mut closest = (usize::MAX, f32::MAX, Arc::new([f32::MAX; 3]));
+    fn one_nearest(&self, unions:&mut UnionFind, coord: &Coord, c_idx:usize) -> (usize, f32) {
+        let mut closest = (usize::MAX, f32::MAX);
         for i in 0..self.p_card {
             let hash = self.proj[i].project(coord);
             for (idx, candidate) in &self.pmap[i][&hash] {
                 let distance = distance_coords(coord, &candidate);
-                if distance < min_distance {
-                    closest = (*idx, distance, candidate.clone());
+                if unions.find(c_idx) != unions.find(*idx) && distance < closest.1 {
+                    closest = (*idx, distance);
                 }
             }
         }
@@ -170,6 +173,7 @@ pub fn parser(path: &str) -> Result<Vec<Coord>, Box<dyn Error>> {
 // then for each of the items we would like look at the buckets and check distances between
 // elements
 
+
 fn alpha_determine_circuit(
     knn: &mut LshKNearestNeighbors,
     unions: &mut UnionFind,
@@ -179,23 +183,43 @@ fn alpha_determine_circuit(
     // // knn should already be initialized
     if knn.n_elem == 0 || coords.is_empty() { return 0; }
     let mut product = 1;
+    // for p in &knn.pmap {
+    //     println!("Hashamp appears as {p:?}");
+    // }
     let n = coords.len();
-    for s in 0..steps {
+    for s in 0..steps - 1 {
+        println!("--------------------------------------------------------------------------------");
+        println!("                             CHOOSING {s}                                       ");
+        println!("clusters {:?}", unions.parents);
         let mut min_distance = f32::MAX;
         let (mut base, mut target) = (usize::MAX, usize::MAX);
         for (base_idx, candidate) in coords.iter().enumerate() {
-            let (target_idx, dist, partner) = knn.one_nearest(candidate);
-            if dist < min_distance && unions.parents[base_idx] != unions.parents[target_idx] {
+            let (target_idx, dist) = knn.one_nearest(unions, candidate, base_idx);
+            if dist < min_distance {
                 min_distance = dist;
+                base = base_idx;
+                target = target_idx;
             }
         }
-        unions.finalize()
+        println!("dist: {min_distance}, base:{base}, target: {target}");
+        println!("--------------------------------------------------------------------------------");
+        let root_base = unions.find(base);
+        let root_target = unions.find(target);
+        unions.union(root_base, root_target);
+        unions.finalize();
     }
+    println!("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+    println!("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+    println!("END END END END END");
+
+    // println!("Unions {:?}", unions.parents);
     let mut cluster_size = vec![0; n];
     for &n in &unions.parents {
         cluster_size[n] += 1;
     }
     cluster_size.sort_by(|a, b| b.cmp(a));
+    println!("clusters {:?}", unions.parents);
+    println!("cluster sizese {cluster_size:?}");
     for i in 0..3 {
         product *= cluster_size[i];
     }
@@ -203,13 +227,30 @@ fn alpha_determine_circuit(
 }
 
 fn main() {
-    // let tachyon = parser("./data/day_7.txt");
-    // match tachyon {
-    //     Ok((mut a, s)) => {
-    //         println!("Beta result {}", beta_tachyon_many_worlds(a.clone(), &s));
-    //     }
-    //     _ => {
-    //         println!("Error in parsing");
-    //     }
-    // }
+    let coords = parser("./data/day_8.txt");
+    // println!("distance found {}", distance_coords(&[431.0, 825.0, 988.0],&[162.0, 817.0, 812.0]));
+    // println!("distance example {}", distance_coords(&[906.0,360.0,560.0], &[805.0,96.0,715.0]));
+
+    match coords {
+        Ok(c) => {
+            let n = c.len();
+            let mut union = UnionFind::new(n);
+            // let mut knn = LshKNearestNeighbors::new(200f32, 10_000);
+            let mut knn = LshKNearestNeighbors::new(100_000.0, 12);
+            for c_idx in 0..n {
+                knn.insert(c_idx, c[c_idx])
+
+            }
+            let result = alpha_determine_circuit(
+                &mut knn,
+                &mut union,
+                &c,
+                10,
+            );
+            println!("Alpha result {}", result);
+        }
+        _ => {
+            println!("Error in parsing");
+        }
+    }
 }
