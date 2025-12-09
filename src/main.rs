@@ -183,14 +183,8 @@ fn alpha_determine_circuit(
     // // knn should already be initialized
     if knn.n_elem == 0 || coords.is_empty() { return 0; }
     let mut product = 1;
-    // for p in &knn.pmap {
-    //     println!("Hashamp appears as {p:?}");
-    // }
     let n = coords.len();
     for s in 0..steps - 1 {
-        println!("--------------------------------------------------------------------------------");
-        println!("                             CHOOSING {s}                                       ");
-        println!("clusters {:?}", unions.parents);
         let mut min_distance = f32::MAX;
         let (mut base, mut target) = (usize::MAX, usize::MAX);
         for (base_idx, candidate) in coords.iter().enumerate() {
@@ -201,25 +195,16 @@ fn alpha_determine_circuit(
                 target = target_idx;
             }
         }
-        println!("dist: {min_distance}, base:{base}, target: {target}");
-        println!("--------------------------------------------------------------------------------");
         let root_base = unions.find(base);
         let root_target = unions.find(target);
         unions.union(root_base, root_target);
         unions.finalize();
     }
-    println!("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
-    println!("-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
-    println!("END END END END END");
-
-    // println!("Unions {:?}", unions.parents);
     let mut cluster_size = vec![0; n];
     for &n in &unions.parents {
         cluster_size[n] += 1;
     }
     cluster_size.sort_by(|a, b| b.cmp(a));
-    println!("clusters {:?}", unions.parents);
-    println!("cluster sizese {cluster_size:?}");
     for i in 0..3 {
         product *= cluster_size[i];
     }
@@ -228,15 +213,13 @@ fn alpha_determine_circuit(
 
 fn main() {
     let coords = parser("./data/day_8.txt");
-    // println!("distance found {}", distance_coords(&[431.0, 825.0, 988.0],&[162.0, 817.0, 812.0]));
-    // println!("distance example {}", distance_coords(&[906.0,360.0,560.0], &[805.0,96.0,715.0]));
 
     match coords {
         Ok(c) => {
             let n = c.len();
             let mut union = UnionFind::new(n);
             // let mut knn = LshKNearestNeighbors::new(200f32, 10_000);
-            let mut knn = LshKNearestNeighbors::new(100_000.0, 12);
+            let mut knn = LshKNearestNeighbors::new(1000.0, 6);
             for c_idx in 0..n {
                 knn.insert(c_idx, c[c_idx])
 
