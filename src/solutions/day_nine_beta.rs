@@ -1,4 +1,5 @@
 #![allow(dead_code, unused)]
+use std::time::Instant;
 use std::collections::HashMap;
 use std::mem;
 use std::{error::Error, fs};
@@ -73,12 +74,12 @@ fn print_grid_transposed(grid: &Vec<Vec<char>>) {
     if grid.is_empty() || grid[0].is_empty() {
         return;
     }
-    
+
     let cols = grid[0].len();
-    
+
     for col in 0..cols {
         for row in grid {
-            print!("{}", row[col] );
+            print!("{}", row[col]);
         }
         println!();
     }
@@ -100,7 +101,10 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
         return 0;
     }
     let (width, height) = (1 + max_x - min_x, 1 + max_y - min_y);
-    println!("min_x: {}, max_x: {}, min_y: {}, max_y: {}", min_x, max_x, min_y, max_y);
+    println!(
+        "min_x: {}, max_x: {}, min_y: {}, max_y: {}",
+        min_x, max_x, min_y, max_y
+    );
     println!("width: {}, height: {}", width, height);
     let mut grid = vec![vec![b'.'; height]; width];
     for i in 0..points.len() {
@@ -115,21 +119,21 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
         grid[end.0][end.1] = b'@';
         if start.0 == end.0 {
             if start.1 < end.1 {
-                for j in start.1+1..end.1 {
+                for j in start.1 + 1..end.1 {
                     grid[start.0][j] = b'*';
                 }
             } else {
-                for j in end.1+1..start.1 {
+                for j in end.1 + 1..start.1 {
                     grid[end.0][j] = b'*';
                 }
             }
         } else if start.1 == end.1 {
             if start.0 < end.0 {
-                for i in start.0+1..end.0 {
+                for i in start.0 + 1..end.0 {
                     grid[i][start.1] = b'*';
                 }
             } else {
-                for i in end.0+1..start.0 {
+                for i in end.0 + 1..start.0 {
                     grid[i][end.1] = b'*';
                 }
             }
@@ -137,7 +141,7 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     }
     println!("parsing grid interior");
     // print_grid_transposed(&grid);
-    let neighbors = [!0, 1,];
+    let neighbors = [!0, 1];
     for i in 0..width {
         let mut even = true;
         let mut ignore = false;
@@ -148,12 +152,15 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
                 for dx in neighbors {
                     let ni = i.wrapping_add(dx);
                     if ni < width && grid[ni][j] == b'*' {
-                        if dx == 1 { edge = 1; }
-                        else if dx == !0 { edge = -1; }
+                        if dx == 1 {
+                            edge = 1;
+                        } else if dx == !0 {
+                            edge = -1;
+                        }
                     }
                 }
                 continue;
-            } else if edge!= 0 && grid[i][j] == b'@' {
+            } else if edge != 0 && grid[i][j] == b'@' {
                 for dx in neighbors {
                     let ni = i.wrapping_add(dx);
                     if ni < width && grid[ni][j] == b'*' {
@@ -184,11 +191,12 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     // print_grid_transposed(&grid);
     println!("finding optimal nodes");
     for k in 0..points.len() {
-        println!("k {k:?}");
+        // println!("k {k:?}");
         for l in 0..points.len() {
             let mut cancel = false;
             let (base, aux) = (points[k], points[l]);
-            let result = (1 + base.0.max(aux.0) - base.0.min(aux.0)) * (1 + base.1.max(aux.1) - base.1.min(aux.1));
+            let result = (1 + base.0.max(aux.0) - base.0.min(aux.0))
+                * (1 + base.1.max(aux.1) - base.1.min(aux.1));
             if base.0 == aux.0 || base.1 == aux.1 || result < max_rectangle {
                 continue;
             } else if base.0 < aux.0 && base.1 < aux.1 {
@@ -199,14 +207,18 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
                         break;
                     }
                 }
-                if cancel { continue; }
+                if cancel {
+                    continue;
+                }
                 for j in base.1..=aux.1 {
                     if grid[base.0][j] == b'.' || grid[base.0][j] == b'.' {
                         cancel = true;
                         break;
                     }
                 }
-                if cancel { continue; }
+                if cancel {
+                    continue;
+                }
             } else if base.0 < aux.0 && aux.1 < base.1 {
                 // bottom left, top right
                 for i in base.0..=aux.0 {
@@ -215,7 +227,9 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
                         break;
                     }
                 }
-                if cancel { continue;}
+                if cancel {
+                    continue;
+                }
                 for j in aux.1..=base.1 {
                     if grid[base.0][j] == b'.' || grid[base.0][j] == b'.' {
                         cancel = true;
@@ -233,17 +247,209 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     }
     max_rectangle
 }
+
+fn gamma_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
+    let mut max_rectangle = 0;
+    let mut min_x = usize::MAX;
+    let mut min_y = usize::MAX;
+    let mut max_y = 0;
+    let mut max_x = 0;
+    for &(x, y) in points.iter() {
+        min_x = min_x.min(x);
+        min_y = min_y.min(y);
+        max_y = max_y.max(y);
+        max_x = max_x.max(x);
+    }
+    if min_x == usize::MAX || min_y == usize::MAX || max_x == 0 || max_y == 0 {
+        return 0;
+    }
+    let (width, height) = (1 + max_x - min_x, 1 + max_y - min_y);
+    println!(
+        "min_x: {}, max_x: {}, min_y: {}, max_y: {}",
+        min_x, max_x, min_y, max_y
+    );
+    println!("width: {}, height: {}", width, height);
+    let mut grid = vec![vec![b'.'; height]; width];
+    for i in 0..points.len() {
+        points[i].0 -= min_x;
+        points[i].1 -= min_y;
+    }
+    println!("parsing grid boundaries");
+    for idx in 0..points.len() {
+        let start = points[idx];
+        let end = points[(idx + 1) % points.len()];
+        grid[start.0][start.1] = b'@';
+        grid[end.0][end.1] = b'@';
+        if start.0 == end.0 {
+            if start.1 < end.1 {
+                for j in start.1 + 1..end.1 {
+                    grid[start.0][j] = b'*';
+                }
+            } else {
+                for j in end.1 + 1..start.1 {
+                    grid[end.0][j] = b'*';
+                }
+            }
+        } else if start.1 == end.1 {
+            if start.0 < end.0 {
+                for i in start.0 + 1..end.0 {
+                    grid[i][start.1] = b'*';
+                }
+            } else {
+                for i in end.0 + 1..start.0 {
+                    grid[i][end.1] = b'*';
+                }
+            }
+        }
+    }
+    println!("parsing grid interior");
+    // print_grid_transposed(&grid);
+    let neighbors = [!0, 1];
+    for i in 0..width {
+        let mut even = true;
+        let mut ignore = false;
+        // (-1: left, 0: none, 1: right )
+        let mut edge = 0;
+        for j in 0..height {
+            if edge == 0 && grid[i][j] == b'@' {
+                for dx in neighbors {
+                    let ni = i.wrapping_add(dx);
+                    if ni < width && grid[ni][j] == b'*' {
+                        if dx == 1 {
+                            edge = 1;
+                        } else if dx == !0 {
+                            edge = -1;
+                        }
+                    }
+                }
+                continue;
+            } else if edge != 0 && grid[i][j] == b'@' {
+                for dx in neighbors {
+                    let ni = i.wrapping_add(dx);
+                    if ni < width && grid[ni][j] == b'*' {
+                        if dx == 1 && edge == 1 {
+                            // exterior edges
+                            edge = 0;
+                            continue;
+                        } else if dx == !0 && edge == -1 {
+                            // exterior edges
+                            edge = 0;
+                            continue;
+                        } else {
+                            // interior edge
+                            even = !even;
+                            edge = 0;
+                        }
+                    }
+                }
+            } else if edge != 0 {
+                continue;
+            } else if grid[i][j] == b'*' {
+                even = !even;
+            } else if !even {
+                grid[i][j] = b'*';
+            }
+        }
+    }
+    let mut prefix_sum = vec![vec![0; height]; width];
+    prefix_sum[0][0] = (grid[0][0] != b'*') as usize;
+    for i in 1..width {
+        prefix_sum[i][0] = prefix_sum[i - 1][0] + (grid[i][0] != b'.') as usize;
+    }
+    for j in 1..height {
+        prefix_sum[0][j] = prefix_sum[0][j - 1] + (grid[0][j] != b'.') as usize;
+    }
+    for i in 1..width {
+        for j in 1..height {
+            prefix_sum[i][j] =
+                ((grid[i][j] != b'.') as usize + prefix_sum[i - 1][j] + prefix_sum[i][j - 1]
+                    - prefix_sum[i - 1][j - 1]);
+        }
+    }
+    // for l in &prefix_sum {
+    //     println!("{l:?}");
+    // }
+
+    // print_grid_transposed(&grid);
+    println!("finding optimal nodes");
+    for k in 0..points.len() {
+        // println!("k {k:?}");
+        for l in 0..points.len() {
+            let mut cancel = false;
+            let (base, aux) = (points[k], points[l]);
+            let result = ((1 + base.0.max(aux.0) - base.0.min(aux.0))
+                * (1 + base.1.max(aux.1) - base.1.min(aux.1)));
+
+            if base.0 == aux.0 || base.1 == aux.1 || result < max_rectangle {
+                continue;
+            } else if base.0 < aux.0 && base.1 < aux.1 {
+                let mut found_area = prefix_sum[aux.0][aux.1];
+                if base.0 > 0 && base.1 > 0 {
+                    found_area += prefix_sum[aux.0 - 1][base.1 - 1];
+                }
+                if base.0 > 0 {
+                    found_area -= prefix_sum[base.0 - 1][aux.1];
+                }
+                if base.1 > 0 {
+                    found_area -= prefix_sum[aux.0][base.1 - 1];
+                }
+                // println!("found_area {found_area:?}, result {result:?}");
+                if found_area != result {
+                    continue;
+                }
+            } else if base.0 < aux.0 && aux.1 < base.1 {
+                // bottom left, top right
+                let mut found_area = prefix_sum[aux.0][base.1];
+                if base.0 > 0 && aux.1 > 0 {
+                    found_area += prefix_sum[base.0 - 1][aux.1 - 1];
+                }
+                if base.0 > 0 {
+                    found_area -= prefix_sum[base.0 - 1][base.1];
+                }
+                if aux.1 > 0 {
+                    found_area -= prefix_sum[aux.0][aux.1 - 1];
+                }
+                // println!("found_area {found_area:?}, result {result:?}");
+                if found_area != result {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+            // println!("here");
+            max_rectangle = max_rectangle.max(result);
+        }
+    }
+    max_rectangle
+}
 // 653744100 ; too low
 // 4601675372 ; too high
 
 // fn main() {
+//     println!("-------------------------------------------------------------");
 //     let points = parser("./data/day_9.txt");
 //     match points {
 //         Ok(mut p) => {
-//             let result = alpha_find_max_rectangle(&p);
-//             println!("Alpha Max found at {result:?}");
+//             // let result = alpha_find_max_rectangle(&p);
+//             // println!("Alpha Max found at {result:?}");
+//             let start = Instant::now();
 //             let result = beta_find_max_rectangle(&mut p);
-//             println!("Beta Max found at {result:?}");
+//             let time = start.elapsed();
+//             println!("Beta version: {} in {:?}", result, time);
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+//     NOTE: Approach is strictly dominated for larger inputs
+//     println!("-------------------------------------------------------------");
+//     let points = parser("./data/day_9.txt");
+//     match points {
+//         Ok(mut p) => {
+//             let start = Instant::now();
+//             let result = gamma_find_max_rectangle(&mut p);
+//             let time = start.elapsed();
+//             println!("Gamma version: {} in {:?}", result, time);
 //         }
 //         _ => {
 //             println!("Error in parsing");
