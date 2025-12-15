@@ -102,8 +102,7 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     let (width, height) = (1 + max_x - min_x, 1 + max_y - min_y);
     println!("min_x: {}, max_x: {}, min_y: {}, max_y: {}", min_x, max_x, min_y, max_y);
     println!("width: {}, height: {}", width, height);
-    debug_assert!(1 == 2);
-    let mut grid = vec![vec!['.'; height]; width];
+    let mut grid = vec![vec![b'.'; height]; width];
     for i in 0..points.len() {
         points[i].0 -= min_x;
         points[i].1 -= min_y;
@@ -112,26 +111,26 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     for idx in 0..points.len() {
         let start = points[idx];
         let end = points[(idx + 1) % points.len()];
-        grid[start.0][start.1] = '@';
-        grid[end.0][end.1] = '@';
+        grid[start.0][start.1] = b'@';
+        grid[end.0][end.1] = b'@';
         if start.0 == end.0 {
             if start.1 < end.1 {
                 for j in start.1+1..end.1 {
-                    grid[start.0][j] = '*';
+                    grid[start.0][j] = b'*';
                 }
             } else {
                 for j in end.1+1..start.1 {
-                    grid[end.0][j] = '*';
+                    grid[end.0][j] = b'*';
                 }
             }
         } else if start.1 == end.1 {
             if start.0 < end.0 {
                 for i in start.0+1..end.0 {
-                    grid[i][start.1] = '*';
+                    grid[i][start.1] = b'*';
                 }
             } else {
                 for i in end.0+1..start.0 {
-                    grid[i][end.1] = '*';
+                    grid[i][end.1] = b'*';
                 }
             }
         }
@@ -145,19 +144,19 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
         // (-1: left, 0: none, 1: right )
         let mut edge = 0;
         for j in 0..height {
-            if edge == 0 && grid[i][j] == '@' {
+            if edge == 0 && grid[i][j] == b'@' {
                 for dx in neighbors {
                     let ni = i.wrapping_add(dx);
-                    if ni < width && grid[ni][j] == '*' {
+                    if ni < width && grid[ni][j] == b'*' {
                         if dx == 1 { edge = 1; }
                         else if dx == !0 { edge = -1; }
                     }
                 }
                 continue;
-            } else if edge!= 0 && grid[i][j] == '@' {
+            } else if edge!= 0 && grid[i][j] == b'@' {
                 for dx in neighbors {
                     let ni = i.wrapping_add(dx);
-                    if ni < width && grid[ni][j] == '*' {
+                    if ni < width && grid[ni][j] == b'*' {
                         if dx == 1 && edge == 1 {
                             // exterior edges
                             edge = 0;
@@ -175,10 +174,10 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
                 }
             } else if edge != 0 {
                 continue;
-            } else if grid[i][j] == '*' {
+            } else if grid[i][j] == b'*' {
                 even = !even;
             } else if !even {
-                grid[i][j] = '*';
+                grid[i][j] = b'*';
             }
         }
     }
@@ -195,14 +194,14 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
             } else if base.0 < aux.0 && base.1 < aux.1 {
                 // top left, bottom right
                 for i in base.0..=aux.0 {
-                    if grid[i][base.1] == '.' || grid[i][aux.1] == '.' {
+                    if grid[i][base.1] == b'.' || grid[i][aux.1] == b'.' {
                         cancel = true;
                         break;
                     }
                 }
                 if cancel { continue; }
                 for j in base.1..=aux.1 {
-                    if grid[base.0][j] == '.' || grid[base.0][j] == '.' {
+                    if grid[base.0][j] == b'.' || grid[base.0][j] == b'.' {
                         cancel = true;
                         break;
                     }
@@ -211,14 +210,14 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
             } else if base.0 < aux.0 && aux.1 < base.1 {
                 // bottom left, top right
                 for i in base.0..=aux.0 {
-                    if grid[i][base.1] == '.' || grid[i][aux.1] == '.' {
+                    if grid[i][base.1] == b'.' || grid[i][aux.1] == b'.' {
                         cancel = true;
                         break;
                     }
                 }
                 if cancel { continue;}
                 for j in aux.1..=base.1 {
-                    if grid[base.0][j] == '.' || grid[base.0][j] == '.' {
+                    if grid[base.0][j] == b'.' || grid[base.0][j] == b'.' {
                         cancel = true;
                         break;
                     }
