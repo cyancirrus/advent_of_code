@@ -1,7 +1,7 @@
 #![allow(dead_code, unused)]
-use std::time::Instant;
 use std::collections::HashMap;
 use std::mem;
+use std::time::Instant;
 use std::{error::Error, fs};
 
 // area = (xmax - xmin) * (ymax - ymin);
@@ -441,7 +441,7 @@ fn gamma_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
 //             println!("Error in parsing");
 //         }
 //     }
-//     NOTE: Approach is strictly dominated for larger inputs
+//     // NOTE: Approach is strictly dominated for larger inputs
 //     println!("-------------------------------------------------------------");
 //     let points = parser("./data/day_9.txt");
 //     match points {

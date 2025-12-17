@@ -364,34 +364,34 @@ fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     max_rectangle
 }
 
-fn main() {
-    // println!("-------------------------------------------------------------");
-    // let points = parser("./data/day_9.txt");
-    // match points {
-    //     Ok(mut p) => {
-    //         // let result = alpha_find_max_rectangle(&p);
-    //         // println!("Alpha Max found at {result:?}");
-    //         let start = Instant::now();
-    //         let result = beta_find_max_rectangle(&mut p);
-    //         let time = start.elapsed();
-    //         println!("Beta version: {} in {:?}", result, time);
-    //     }
-    //     _ => {
-    //         println!("Error in parsing");
-    //     }
-    // }
-    // NOTE: Approach is strictly dominated for larger inputs
-    println!("-------------------------------------------------------------");
-    let points = parser("./data/day_9.txt");
-    match points {
-        Ok(mut p) => {
-            let start = Instant::now();
-            let result = delta_find_max_rectangle(&mut p);
-            let time = start.elapsed();
-            println!("Delta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-}
+// fn main() {
+//     // println!("-------------------------------------------------------------");
+//     // let points = parser("./data/day_9.txt");
+//     // match points {
+//     //     Ok(mut p) => {
+//     //         // let result = alpha_find_max_rectangle(&p);
+//     //         // println!("Alpha Max found at {result:?}");
+//     //         let start = Instant::now();
+//     //         let result = beta_find_max_rectangle(&mut p);
+//     //         let time = start.elapsed();
+//     //         println!("Beta version: {} in {:?}", result, time);
+//     //     }
+//     //     _ => {
+//     //         println!("Error in parsing");
+//     //     }
+//     // }
+//     // NOTE: Approach is strictly dominated for larger inputs
+//     println!("-------------------------------------------------------------");
+//     let points = parser("./data/day_9.txt");
+//     match points {
+//         Ok(mut p) => {
+//             let start = Instant::now();
+//             let result = delta_find_max_rectangle(&mut p);
+//             let time = start.elapsed();
+//             println!("Delta version: {} in {:?}", result, time);
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+// }
