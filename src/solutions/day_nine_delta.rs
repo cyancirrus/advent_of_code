@@ -339,10 +339,10 @@ fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
 
     let n = points.len();
     let mut max_rectangle = 0;
-    for jdx in 217..=217 {
-        for kdx in 248..=248 {
-    // for jdx in 0..n {
-    //     for kdx in jdx + 1..n {
+    // for jdx in 217..=217 {
+    //     for kdx in 248..=248 {
+    for jdx in 0..n {
+        for kdx in jdx + 1..n {
             let mut valid = true;
             // top-left, bottom-right, top-right, bottom-left
             let tl = (
