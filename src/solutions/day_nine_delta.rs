@@ -93,6 +93,7 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
     let mut min_y = usize::MAX;
     let mut max_y = 0;
     let mut max_x = 0;
+    let (mut p1, mut p2) = ((0,0), (0,0));
     for &(x, y) in points.iter() {
         min_x = min_x.min(x);
         min_y = min_y.min(y);
@@ -244,9 +245,14 @@ fn beta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
             } else {
                 continue;
             }
+            if result > max_rectangle {
+                (p1, p2) = (base, aux);
+            }
             max_rectangle = max_rectangle.max(result);
         }
     }
+    println!("Solutions at {p1:?}, {p2:?}");
+    println!("Area  {:?}", (1 + p1.0.max(p2.0) - p1.0.min(p2.0)) * (1 + p1.1.max(p2.1) - p1.1.min(p2.1)));
     max_rectangle
 }
 
@@ -284,22 +290,19 @@ fn are_clockwise_edges_valid(
         // Collinear edges
         if cross.abs() < EPSILON {
             let dot = e2.0 * e1.0 + e2.1 * e1.1;
-            
-            // Opposite directions - check for overlap
-            if dot < 0.0 {
-                let use_x = e1.0.abs() > e1.1.abs();
-                let (rect_min, rect_max, loop_min, loop_max) = if use_x {
-                    (fe1p1.0.min(fe1p2.0), fe1p1.0.max(fe1p2.0),
-                     fe2p1.0.min(fe2p2.0), fe2p1.0.max(fe2p2.0))
-                } else {
-                    (fe1p1.1.min(fe1p2.1), fe1p1.1.max(fe1p2.1),
-                     fe2p1.1.min(fe2p2.1), fe2p1.1.max(fe2p2.1))
-                };
+            let use_x = e1.0.abs() > e1.1.abs();
+            let (rect_min, rect_max, loop_min, loop_max) = if use_x {
+                (fe1p1.0.min(fe1p2.0), fe1p1.0.max(fe1p2.0),
+                 fe2p1.0.min(fe2p2.0), fe2p1.0.max(fe2p2.0))
+            } else {
+                (fe1p1.1.min(fe1p2.1), fe1p1.1.max(fe1p2.1),
+                 fe2p1.1.min(fe2p2.1), fe2p1.1.max(fe2p2.1))
+            };
                 
-                // Valid if no overlap (just touching at endpoints)
-                return rect_max <= loop_min + EPSILON || loop_max <= rect_min + EPSILON;
+            // If no overlap at all (touching endpoint is fine)
+            if rect_max <= loop_min + EPSILON || loop_max <= rect_min + EPSILON {
+                return true;
             }
-            
             // Same direction - check if rectangle edge extends beyond loop edge
             if e1_len_sq > e2_len_sq + EPSILON {
                 let e2_next = (fe2p3.0 - fe2p2.0, fe2p3.1 - fe2p2.1);
@@ -322,10 +325,25 @@ fn are_clockwise_edges_valid(
 }
 
 fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
+    // solution at 217, 248
+    // ravenecho@Ravens-MacBook-Pro advent_of_code % echo $((1643 + 3958));
+    // 5601
+    // ravenecho@Ravens-MacBook-Pro advent_of_code % echo $((1604 + 66126));
+    // 67730
+    // ravenecho@Ravens-MacBook-Pro advent_of_code % k
+    // zsh: command not found: k
+    // ravenecho@Ravens-MacBook-Pro advent_of_code % echo $((93157 + 1643));
+    // 94800
+    // ravenecho@Ravens-MacBook-Pro advent_of_code % echo $((48539 + 1604));
+    // 50143
+
     let n = points.len();
     let mut max_rectangle = 0;
-    for jdx in 0..n {
-        for kdx in jdx + 1..n {
+    for jdx in 217..=217 {
+        for kdx in 248..=248 {
+    // for jdx in 0..n {
+    //     for kdx in jdx + 1..n {
+            let mut valid = true;
             // top-left, bottom-right, top-right, bottom-left
             let tl = (
                 points[jdx].0.min(points[kdx].0),
@@ -335,27 +353,41 @@ fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
                 points[jdx].0.max(points[kdx].0),
                 points[jdx].1.max(points[kdx].1),
             );
+            // println!("top_left {tl:?}, bottom_right {br:?}");
             let tr = (br.0, tl.1);
             let bl = (tl.0, br.1);
             let potential = (1 + tr.0 - tl.0) * (1 + bl.1 - tl.1);
             if potential <= max_rectangle {
                 continue;
             }
-            let mut valid = true;
-            let mut is_valid = true;
             for idx in 0..n {
-                let (x1, x2) = (points[idx], points[(idx + 1) % n]);
-                // clockwise edges
                 let (x1, x2, x3) = (points[idx], points[(idx + 1) % n], points[(idx + 2) % n]);
-                if !are_clockwise_edges_valid(&tl, &tr, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&tr, &br, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&br, &bl, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&bl, &tl, &x1, &x2, &x3)
-                {
+                let v1 = are_clockwise_edges_valid(&tl, &tr, &x1, &x2, &x3);
+                let v2 = are_clockwise_edges_valid(&tr, &br, &x1, &x2, &x3);
+                let v3 = are_clockwise_edges_valid(&br, &bl, &x1, &x2, &x3);
+                let v4 = are_clockwise_edges_valid(&bl, &tl, &x1, &x2, &x3);
+                
+                if !v1 || !v2 || !v3 || !v4 {
+                    println!("Failed on loop edge {:?} -> {:?}", x1, x2);
+                    println!("  tl->tr: {}, tr->br: {}, br->bl: {}, bl->tl: {}", v1, v2, v3, v4);
                     valid = false;
-                    break;
+                    // break;
                 }
             }
+            // let mut valid = true;
+            // for idx in 0..n {
+            //     let (x1, x2) = (points[idx], points[(idx + 1) % n]);
+            //     // clockwise edges
+            //     let (x1, x2, x3) = (points[idx], points[(idx + 1) % n], points[(idx + 2) % n]);
+            //     if !are_clockwise_edges_valid(&tl, &tr, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&tr, &br, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&br, &bl, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&bl, &tl, &x1, &x2, &x3)
+            //     {
+            //         valid = false;
+            //         break;
+            //     }
+            // }
             if valid {
                 max_rectangle = potential;
             }
@@ -365,6 +397,7 @@ fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
 }
 
 // fn main() {
+//     // NOTE: Approach is strictly dominated for larger inputs
 //     // println!("-------------------------------------------------------------");
 //     // let points = parser("./data/day_9.txt");
 //     // match points {
@@ -380,7 +413,6 @@ fn delta_find_max_rectangle(points: &mut [(usize, usize)]) -> usize {
 //     //         println!("Error in parsing");
 //     //     }
 //     // }
-//     // NOTE: Approach is strictly dominated for larger inputs
 //     println!("-------------------------------------------------------------");
 //     let points = parser("./data/day_9.txt");
 //     match points {
