@@ -62,43 +62,73 @@ fn are_clockwise_edges_valid(
     
     // Parallel edges
     if denom.abs() == 0 {
-        let mut valid = true;
         let cross = d.0 * e1.1 - d.1 * e1.0;
     
         // Collinear edges
         if cross.abs() == 0 {
-            let dot = e2.0 * e1.0 + e2.1 * e1.1;
             let use_x = e1.0.abs() > e1.1.abs();
-            let (rect_min, rect_max, loop_min, loop_max) = if use_x {
-                (e1p1.0.min(e1p2.0), e1p1.0.max(e1p2.0),
-                 e2p1.0.min(e2p2.0), e2p1.0.max(e2p2.0))
+            
+            // Use actual traversal positions
+            let (rect_start, rect_end, loop_start, loop_end) = if use_x {
+                (e1p1.0, e1p2.0, e2p1.0, e2p2.0)
             } else {
-                (e1p1.1.min(e1p2.1), e1p1.1.max(e1p2.1),
-                 e2p1.1.min(e2p2.1), e2p1.1.max(e2p2.1))
+                (e1p1.1, e1p2.1, e2p1.1, e2p2.1)
             };
-            // extension before
-            if rect_min < loop_min {
-                let prev_turn = (e2p1.0 - e2p0.0) * e1.1 - (e2p1.1 - e2p0.1) * e1.0;
-                valid &= prev_turn <= 0;
-            }
-            // extension after
-            if rect_max > loop_max {
-                let next_turn = e2.0 * (e2p3.1 - e2p2.1) - e2.1 * (e2p3.0 - e2p2.0);
-                valid &= next_turn >= 0;
-            }
-            // If no overlap at all (touching endpoint is fine)
-            if rect_max <= loop_min  || loop_max <= rect_min {
+            
+            // Get bounding boxes
+            let (rect_min, rect_max) = if rect_start < rect_end {
+                (rect_start, rect_end)
+            } else {
+                (rect_end, rect_start)
+            };
+            let (loop_min, loop_max) = if loop_start < loop_end {
+                (loop_start, loop_end)
+            } else {
+                (loop_end, loop_start)
+            };
+            
+            // No overlap or just touching at endpoints - always valid
+            if rect_max <= loop_min || loop_max <= rect_min {
                 return true;
             }
-            valid &= dot > 0;
+            let dot = e2.0 * e1.0 + e2.1 * e1.1;
+            
+            // They overlap - must point in same direction
+            if dot <= 0 {
+                return false;
+            }
+            
+            let mut valid = true;
+            
+            // Check if rectangle extends before polygon edge starts
+            if (rect_start < loop_start && e1.0 + e1.1 > 0) || 
+               (rect_start > loop_start && e1.0 + e1.1 < 0) {
+                let prev_turn = (e2p1.0 - e2p0.0) * e2.1 - (e2p1.1 - e2p0.1) * e2.0;
+                valid &= prev_turn <= 0;
+            }
+            
+            // Check if rectangle extends after polygon edge ends
+            if (rect_end > loop_end && e1.0 + e1.1 > 0) || 
+               (rect_end < loop_end && e1.0 + e1.1 < 0) {
+                let next_turn = e2.0 * (e2p3.1 - e2p2.1) - e2.1 * (e2p3.0 - e2p2.0);
+                valid &= next_turn <= 0;
+            }
+            
+            return valid;
         }
-        // Parallel but not collinear
-        return valid;
+        
+        // Parallel but not collinear - no intersection
+        return true;
     }
     
     // Non-parallel edges - check for intersection
-    let s = (d.1 * e2.0 - d.0 * e2.1);
-    let t = (e1.0 * d.1 - d.0 * e1.1);
+    let s = d.1 * e2.0 - d.0 * e2.1;
+    let t = e1.0 * d.1 - d.0 * e1.1;
+    let (s, t, denom) = if denom > 0 {
+        (s, t, denom)
+    } else {
+        (-s, -t, -denom)
+    };
     
     // Valid if not a proper interior intersection
     !(0 < s && s < denom && 0 < t && t < denom)
@@ -107,6 +137,8 @@ fn are_clockwise_edges_valid(
 fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
     let n = points.len();
     let mut max_rectangle = 0;
+    // for jdx in 4..=4 {
+    //     for kdx in 6..=6 {
     for jdx in 0..n {
         for kdx in jdx + 1..n {
             let mut valid = true;
@@ -119,6 +151,7 @@ fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
                 points[jdx].0.max(points[kdx].0),
                 points[jdx].1.max(points[kdx].1),
             );
+            // println!("Point {tl:?}, {br:?}");
             let tr = (br.0, tl.1);
             let bl = (tl.0, br.1);
             let potential = (1 + tr.0 - tl.0) * (1 + bl.1 - tl.1);
