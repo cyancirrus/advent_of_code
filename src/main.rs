@@ -40,8 +40,7 @@ fn parser(path: &str) -> Result<Vec<(isize, isize)>, Box<dyn Error>> {
 
 fn are_clockwise_edges_valid(
     e1p1: &(isize, isize),
-    e1p2: &(isize, isize),
-    e2p0: &(isize, isize),
+    e1p2: &(isize, isize), e2p0: &(isize, isize),
     e2p1: &(isize, isize),
     e2p2: &(isize, isize),
     e2p3: &(isize, isize),
@@ -68,29 +67,85 @@ fn are_clockwise_edges_valid(
         // Collinear edges
         if cross.abs() == 0 {
             let dot = e2.0 * e1.0 + e2.1 * e1.1;
+            
+        let use_x = e1.0.abs() > e1.1.abs();
+        
+        // Use actual traversal positions, not min/max
+        let (rect_start, rect_end, loop_start, loop_end) = if use_x {
+            (e1p1.0, e1p2.0, e2p1.0, e2p2.0)
+        } else {
+            (e1p1.1, e1p2.1, e2p1.1, e2p2.1)
+        };
+        
+        // Check for overlap in bounding boxes
+        let (rect_min, rect_max) = if rect_start < rect_end {
+            (rect_start, rect_end)
+        } else {
+            (rect_end, rect_start)
+        };
+        let (loop_min, loop_max) = if loop_start < loop_end {
+            (loop_start, loop_end)
+        } else {
+            (loop_end, loop_start)
+        };
+        
+        // If they only touch at one point (no proper overlap)
+        if rect_max == loop_min || rect_min == loop_max {
+            return true;  // Just touching at endpoints
+        }
+        
+        // No overlap at all
+        if rect_max < loop_min || loop_max < rect_min {
+            return true;
+        }
+        
+        // They overlap - must point in same direction
+        if dot <= 0 {
+            return false;
+        }
+        
+        // ... rest of extension checks ...
+            
             let use_x = e1.0.abs() > e1.1.abs();
-            let (rect_min, rect_max, loop_min, loop_max) = if use_x {
-                (e1p1.0.min(e1p2.0), e1p1.0.max(e1p2.0),
-                 e2p1.0.min(e2p2.0), e2p1.0.max(e2p2.0))
+            
+            // Use actual traversal positions, not min/max
+            let (rect_start, rect_end, loop_start, loop_end) = if use_x {
+                (e1p1.0, e1p2.0, e2p1.0, e2p2.0)
             } else {
-                (e1p1.1.min(e1p2.1), e1p1.1.max(e1p2.1),
-                 e2p1.1.min(e2p2.1), e2p1.1.max(e2p2.1))
+                (e1p1.1, e1p2.1, e2p1.1, e2p2.1)
             };
-            // extension before
-            if rect_min < loop_min {
-                let prev_turn = (e2p1.0 - e2p0.0) * e1.1 - (e2p1.1 - e2p0.1) * e1.0;
+            
+            // Check if rectangle extends before polygon edge starts (in traversal direction)
+            // This means we need to check the turn INTO the polygon edge
+            if (rect_start < loop_start && e1.0 + e1.1 > 0) || 
+               (rect_start > loop_start && e1.0 + e1.1 < 0) {
+                let prev_turn = (e2p1.0 - e2p0.0) * e2.1 - (e2p1.1 - e2p0.1) * e2.0;
                 valid &= prev_turn <= 0;
             }
-            // extension after
-            if rect_max > loop_max {
+            
+            // Check if rectangle extends after polygon edge ends (in traversal direction)
+            // This means we need to check the turn OUT OF the polygon edge
+            if (rect_end > loop_end && e1.0 + e1.1 > 0) || 
+               (rect_end < loop_end && e1.0 + e1.1 < 0) {
                 let next_turn = e2.0 * (e2p3.1 - e2p2.1) - e2.1 * (e2p3.0 - e2p2.0);
-                valid &= next_turn >= 0;
+                valid &= next_turn <= 0;
             }
-            // If no overlap at all (touching endpoint is fine)
-            if rect_max <= loop_min  || loop_max <= rect_min {
+            
+            // No overlap check - if they don't overlap at all, return early
+            let (rect_min, rect_max) = if rect_start < rect_end {
+                (rect_start, rect_end)
+            } else {
+                (rect_end, rect_start)
+            };
+            let (loop_min, loop_max) = if loop_start < loop_end {
+                (loop_start, loop_end)
+            } else {
+                (loop_end, loop_start)
+            };
+            
+            if rect_max < loop_min || loop_max < rect_min {
                 return true;
             }
-            valid &= dot > 0;
         }
         // Parallel but not collinear
         return valid;
@@ -99,6 +154,11 @@ fn are_clockwise_edges_valid(
     // Non-parallel edges - check for intersection
     let s = (d.1 * e2.0 - d.0 * e2.1);
     let t = (e1.0 * d.1 - d.0 * e1.1);
+    let (s, t, denom) = if denom > 0 {
+        (s, t, denom)
+    } else {
+        (-s, -t, -denom)
+    };
     
     // Valid if not a proper interior intersection
     !(0 < s && s < denom && 0 < t && t < denom)
@@ -107,6 +167,8 @@ fn are_clockwise_edges_valid(
 fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
     let n = points.len();
     let mut max_rectangle = 0;
+    // for jdx in 4..=4 {
+    //     for kdx in 6..=6 {
     for jdx in 0..n {
         for kdx in jdx + 1..n {
             let mut valid = true;
@@ -119,6 +181,7 @@ fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
                 points[jdx].0.max(points[kdx].0),
                 points[jdx].1.max(points[kdx].1),
             );
+            // println!("Point {tl:?}, {br:?}");
             let tr = (br.0, tl.1);
             let bl = (tl.0, br.1);
             let potential = (1 + tr.0 - tl.0) * (1 + bl.1 - tl.1);
@@ -129,15 +192,30 @@ fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
             for idx in 0..n {
                 // clockwise edges
                 let (x0, x1, x2, x3) = (points[idx], points[(idx + 1) % n], points[(idx + 2) % n], points[(idx + 3)%n]);
-                if !are_clockwise_edges_valid(&tl, &tr, &x0, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&tr, &br, &x0, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&br, &bl, &x0, &x1, &x2, &x3)
-                    || !are_clockwise_edges_valid(&bl, &tl, &x0, &x1, &x2, &x3)
-                {
+                let v1 = are_clockwise_edges_valid(&tl, &tr, &x0, &x1, &x2, &x3);
+                let v2 = are_clockwise_edges_valid(&tr, &br, &x0, &x1, &x2, &x3);
+                let v3 = are_clockwise_edges_valid(&br, &bl, &x0, &x1, &x2, &x3);
+                let v4 = are_clockwise_edges_valid(&bl, &tl, &x0, &x1, &x2, &x3);
+                if !v1 || !v2 || !v3 || !v4 {
+                    // println!("Failure for edge testing ({x1:?}, {x2:?}");
+                    // println!("TL->TR {}, TR->BR {}, BR-> BL {}, BL->TL {}", v1, v2, v3, v4);
+
                     valid = false;
                     break;
                 }
             }
+            // for idx in 0..n {
+            //     // clockwise edges
+            //     let (x0, x1, x2, x3) = (points[idx], points[(idx + 1) % n], points[(idx + 2) % n], points[(idx + 3)%n]);
+            //     if !are_clockwise_edges_valid(&tl, &tr, &x0, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&tr, &br, &x0, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&br, &bl, &x0, &x1, &x2, &x3)
+            //         || !are_clockwise_edges_valid(&bl, &tl, &x0, &x1, &x2, &x3)
+            //     {
+            //         valid = false;
+            //         break;
+            //     }
+            // }
             if valid {
                 max_rectangle = potential;
             }
