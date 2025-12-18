@@ -137,8 +137,6 @@ fn are_clockwise_edges_valid(
 fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
     let n = points.len();
     let mut max_rectangle = 0;
-    // for jdx in 4..=4 {
-    //     for kdx in 6..=6 {
     for jdx in 0..n {
         for kdx in jdx + 1..n {
             let mut valid = true;
@@ -151,7 +149,6 @@ fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
                 points[jdx].0.max(points[kdx].0),
                 points[jdx].1.max(points[kdx].1),
             );
-            // println!("Point {tl:?}, {br:?}");
             let tr = (br.0, tl.1);
             let bl = (tl.0, br.1);
             let potential = (1 + tr.0 - tl.0) * (1 + bl.1 - tl.1);
