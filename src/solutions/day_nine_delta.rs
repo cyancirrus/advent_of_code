@@ -155,7 +155,6 @@ fn delta_find_max_rectangle(points: &mut [(isize, isize)]) -> isize {
             if potential <= max_rectangle {
                 continue;
             }
-            let mut valid = true;
             for idx in 0..n {
                 // clockwise edges
                 let (x0, x1, x2, x3) = (points[idx], points[(idx + 1) % n], points[(idx + 2) % n], points[(idx + 3)%n]);
