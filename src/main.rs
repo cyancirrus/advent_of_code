@@ -31,9 +31,9 @@ fn alpha_initialize_all_state(reqs:&[(u16, Vec<u16>, Vec<u16>)]) -> usize {
 
 #[derive(Eq, PartialEq, Clone, Debug)]
 struct MinNode {
-    estimate:usize,
-    counters: Vec<usize>,
-    non_zeros: usize,
+    estimate:u8,
+    counters: Vec<u8>,
+    non_zeros: u8,
     steps:usize,
 }
 
@@ -49,7 +49,7 @@ impl PartialOrd for MinNode {
     }
 }
 
-fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
+fn beta_initialize_state(switches:&[Vec<u8>], counters:Vec<u8>) -> usize {
     let mut seen  = HashSet::new();
     let mut non_zeros = 0;
     let mut estimate = 0;
@@ -65,13 +65,12 @@ fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
         for sw in switches {
             let mut update = node.clone();
             update.steps += 1;
-            if sw.iter().all(|&i| node.counters[i] > 0) {
             for &jdx in sw {
-                if update.counters[jdx] == 0 { break; }
-                else if update.counters[jdx] == 1 {
+                if update.counters[jdx as usize] == 0 { break; }
+                else if update.counters[jdx as usize] == 1 {
                     update.non_zeros -=1;
                 }
-                update.counters[jdx] -= 1;
+                update.counters[jdx as usize] -= 1;
                 update.estimate -= 1;
             }
             if update.non_zeros == 0 {
@@ -80,14 +79,13 @@ fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
             else if seen.insert(update.counters.clone()) {
                 priority_queue.push(update);
             }
-            }
         }
     }
     usize::MAX
 }
 
 
-fn beta_initialize_all_state(reqs:&[(Vec<Vec<usize>>, Vec<usize>)]) -> usize {
+fn beta_initialize_all_state(reqs:&[(Vec<Vec<u8>>, Vec<u8>)]) -> usize {
     let mut total = 0;
     let mut i = 0;
     for (switches, joltage) in reqs {

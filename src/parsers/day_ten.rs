@@ -102,7 +102,7 @@ fn parse_bit_line(line: &str) -> Result<(u16, Vec<u16>, Vec<u16>), Box<dyn Error
     Ok((d, switches, costs))
 }
 
-fn parse_int_line(line: &str) -> Result<(Vec<Vec<usize>>, Vec<usize>), Box<dyn Error>> {
+fn parse_int_line(line: &str) -> Result<(Vec<Vec<u8>>, Vec<u8>), Box<dyn Error>> {
     let mut chars = line.chars().peekable();
     // Parse lights pattern [.##.]
 
@@ -223,7 +223,7 @@ pub fn parser_bits(path: &str) -> Result<Vec<(u16, Vec<u16>, Vec<u16>)>, Box<dyn
     Ok(requirements)
 }
 
-pub fn parser_ints(path: &str) -> Result<Vec<(Vec<Vec<usize>>, Vec<usize>)>, Box<dyn Error>> {
+pub fn parser_ints(path: &str) -> Result<Vec<(Vec<Vec<u8>>, Vec<u8>)>, Box<dyn Error>> {
     let content = fs::read_to_string(path)
         .map_err(|e| format!("Unable to read path: {}\nError: {:?}", path, e))?;
 
