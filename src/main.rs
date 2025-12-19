@@ -38,7 +38,6 @@ struct MinNode {
 }
 
 impl Ord for MinNode {
-
     fn cmp(&self, other:&Self) -> Ordering {
         other.estimate.cmp(&self.estimate)
     }
@@ -66,6 +65,7 @@ fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
         for sw in switches {
             let mut update = node.clone();
             update.steps += 1;
+            if sw.iter().all(|&i| node.counters[i] > 0) {
             for &jdx in sw {
                 if update.counters[jdx] == 0 { break; }
                 else if update.counters[jdx] == 1 {
@@ -79,6 +79,7 @@ fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
             }
             else if seen.insert(update.counters.clone()) {
                 priority_queue.push(update);
+            }
             }
         }
     }
