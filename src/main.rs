@@ -91,7 +91,8 @@ fn main() {
     println!("-------------------------------------------------------------");
     let reqs = parser_ints("./data/day_10.txt");
     match reqs {
-        Ok(p) => {
+        Ok(mut p) => {
+            p.sort_by_key(|(_, joltage)| std::cmp::Reverse(joltage.iter().sum::<usize>()));
             let start = Instant::now();
             let result = beta_initialize_all_state(&p);
             let time = start.elapsed();
