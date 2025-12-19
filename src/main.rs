@@ -1,7 +1,8 @@
 #![allow(dead_code, unused)]
+use std::cmp::Ordering;
 use std::time::Instant;
 use std::{error::Error, fs};
-use std::collections::{VecDeque, HashSet};
+use std::collections::{VecDeque, HashSet, BinaryHeap};
 use advent_of_code::parsers::day_ten::{parser_bits, parser_ints};
 
 
@@ -28,35 +29,62 @@ fn alpha_initialize_all_state(reqs:&[(u16, Vec<u16>, Vec<u16>)]) -> usize {
     total
 }
 
-fn beta_initialize_state(switches:&[Vec<usize>], joltage:Vec<usize>) -> usize {
-    let mut seen = HashSet::new();
-    let mut non_zeros = 0;
-    for &j in &joltage {
-        if j != 0 { non_zeros +=1; }
+#[derive(Eq, PartialEq, Clone, Debug)]
+struct MinNode {
+    estimate:usize,
+    counters: Vec<usize>,
+    non_zeros: usize,
+    steps:usize,
+}
+
+impl Ord for MinNode {
+
+    fn cmp(&self, other:&Self) -> Ordering {
+        other.estimate.cmp(&self.estimate)
     }
-    let mut queue = VecDeque::from([(joltage, non_zeros, 0)]);
+}
+
+impl PartialOrd for MinNode {
+    fn partial_cmp(&self, other:&Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn beta_initialize_state(switches:&[Vec<usize>], counters:Vec<usize>) -> usize {
+    let mut seen  = HashSet::new();
+    let mut non_zeros = 0;
+    let mut estimate = 0;
+    for &num in &counters {
+        if num != 0 { non_zeros +=1; }
+        estimate += num;
+    }
+    let mut switch_count = switches.len();
+    let mut priority_queue = BinaryHeap::new();
+    priority_queue.push(MinNode{estimate, counters, non_zeros, steps: 0 });
     
-    while let Some((joltage, non_zeros, steps)) = queue.pop_back() {
+    while let Some(node) = priority_queue.pop() {
         for sw in switches {
-            let mut update = joltage.clone();
-            let mut update_non_zeros = non_zeros;
+            let mut update = node.clone();
+            update.steps += 1;
             for &jdx in sw {
-                if update[jdx] == 0 { break; } else if update[jdx] == 1 {
-                    update_non_zeros -= 1;
+                if update.counters[jdx] == 0 { break; }
+                else if update.counters[jdx] == 1 {
+                    update.non_zeros -=1;
                 }
-                update[jdx] -= 1;
+                update.counters[jdx] -= 1;
+                update.estimate -= 1;
             }
-            if update_non_zeros == 0 {
-                return steps +1;
+            if update.non_zeros == 0 {
+                return update.steps;
             }
-            else if seen.insert(update.clone()) {
-                queue.push_front((update, update_non_zeros, steps+1));
+            else if seen.insert(update.counters.clone()) {
+                priority_queue.push(update);
             }
-            
         }
     }
     usize::MAX
 }
+
 
 fn beta_initialize_all_state(reqs:&[(Vec<Vec<usize>>, Vec<usize>)]) -> usize {
     let mut total = 0;
@@ -91,8 +119,8 @@ fn main() {
     println!("-------------------------------------------------------------");
     let reqs = parser_ints("./data/day_10.txt");
     match reqs {
-        Ok(mut p) => {
-            p.sort_by_key(|(_, joltage)| std::cmp::Reverse(joltage.iter().sum::<usize>()));
+        Ok(p) => {
+            println!("p {p:?}");
             let start = Instant::now();
             let result = beta_initialize_all_state(&p);
             let time = start.elapsed();
@@ -104,3 +132,4 @@ fn main() {
         }
     }
 }
+
