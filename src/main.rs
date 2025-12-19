@@ -33,7 +33,7 @@ fn alpha_initialize_all_state(reqs:&[(u16, Vec<u16>, Vec<u16>)]) -> usize {
 struct MinNode {
     estimate:u16,
     counters: Vec<u16>,
-    non_zeros: u16,
+    non_zeros: u8,
     steps:usize,
 }
 
@@ -49,7 +49,7 @@ impl PartialOrd for MinNode {
     }
 }
 
-fn beta_initialize_state(switches:&[Vec<u16>], counters:Vec<u16>) -> usize {
+fn beta_initialize_state(switches:&[Vec<u8>], counters:Vec<u16>) -> usize {
     let mut seen  = HashSet::new();
     let mut non_zeros = 0;
     let mut estimate = 0;
@@ -85,7 +85,7 @@ fn beta_initialize_state(switches:&[Vec<u16>], counters:Vec<u16>) -> usize {
 }
 
 
-fn beta_initialize_all_state(reqs:&[(Vec<Vec<u16>>, Vec<u16>)]) -> usize {
+fn beta_initialize_all_state(reqs:&[(Vec<Vec<u8>>, Vec<u16>)]) -> usize {
     let mut total = 0;
     let mut i = 0;
     for (switches, joltage) in reqs {
