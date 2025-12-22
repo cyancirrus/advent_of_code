@@ -1,2 +1,2 @@
-pub mod solutions;
 pub mod parsers;
+pub mod solutions;

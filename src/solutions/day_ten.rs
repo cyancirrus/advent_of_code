@@ -81,38 +81,38 @@ fn beta_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
     total
 }
 
-fn main() {
-    println!("-------------------------------------------------------------");
-    let reqs = parser_bits("./data/day_10.txt");
-    match reqs {
-        Ok(mut p) => {
-            let start = Instant::now();
-            let result = alpha_initialize_all_state(&p);
-            let time = start.elapsed();
-            println!("Alpha found at {result:?}");
-            println!("Alpha version: {} in {:?}", result, time);
-            // let start = Instant::now();
-            // let result = beta_find_max_rectangle(&mut p);
-            // let time = start.elapsed();
-            // println!("Beta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-    println!("-------------------------------------------------------------");
-    let reqs = parser_bits("./data/day_10.txt");
-    match reqs {
-        Ok(p) => {
-            println!("p {p:?}");
-            let start = Instant::now();
-            let result = beta_initialize_all_state(&p);
-            let time = start.elapsed();
-            println!("Beta found at {result:?}");
-            println!("Beta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-}
+// fn main() {
+//     println!("-------------------------------------------------------------");
+//     let reqs = parser_bits("./data/day_10.txt");
+//     match reqs {
+//         Ok(mut p) => {
+//             let start = Instant::now();
+//             let result = alpha_initialize_all_state(&p);
+//             let time = start.elapsed();
+//             println!("Alpha found at {result:?}");
+//             println!("Alpha version: {} in {:?}", result, time);
+//             // let start = Instant::now();
+//             // let result = beta_find_max_rectangle(&mut p);
+//             // let time = start.elapsed();
+//             // println!("Beta version: {} in {:?}", result, time);
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+//     println!("-------------------------------------------------------------");
+//     let reqs = parser_bits("./data/day_10.txt");
+//     match reqs {
+//         Ok(p) => {
+//             println!("p {p:?}");
+//             let start = Instant::now();
+//             let result = beta_initialize_all_state(&p);
+//             let time = start.elapsed();
+//             println!("Beta found at {result:?}");
+//             println!("Beta version: {} in {:?}", result, time);
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+// }
