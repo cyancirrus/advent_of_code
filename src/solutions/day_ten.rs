@@ -1,5 +1,5 @@
 #![allow(dead_code, unused)]
-use advent_of_code::parsers::day_ten::{parser_bits, parser_ints};
+use crate::parsers::day_ten::{parser_bits, parser_ints};
 use std::cmp::Ordering;
 use std::collections::{HashSet, VecDeque};
 use std::time::Instant;

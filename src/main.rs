@@ -5,114 +5,23 @@ use std::collections::{HashSet, VecDeque};
 use std::time::Instant;
 use std::{error::Error, fs};
 
-fn alpha_initialize_state(objective: u16, switches: &[u16]) -> usize {
-    let mut seen = HashSet::from([objective]);
-    let mut queue = VecDeque::from([(objective, 0)]);
-    while let Some((state, steps)) = queue.pop_front() {
-        for s in switches {
-            let update = s ^ state;
-            if update == 0 {
-                return steps + 1;
-            } else if seen.insert(update) {
-                queue.push_back((update, steps + 1));
-            }
-        }
-    }
-    return usize::MAX;
-}
-
-fn alpha_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
-    let mut total = 0;
-    for (objective, switches, _) in reqs {
-        total += alpha_initialize_state(*objective, switches);
-    }
-    total
-}
-
-// 3547 -> (1101)
-// 2446
-// 1223 -> (1001)
-// 0222
-// 0111 -> (0111)
-
-fn beta_initialize_state(switches: &[u16], mut counters: Vec<u16>) -> usize {
-    let mut non_zeros = 0;
-    let mut steps = 0;
-    let mut pos = 1;
-    let n = counters.len();
-    for &n in &counters {
-        if n > 0 {
-            non_zeros += 1;
-        }
-    }
-    // println!("test {}", alpha_initialize_state(13, switches));
-    while non_zeros > 0 {
-        let mut odd = 0;
-        let mut odds = vec![0; n];
-        for i in 0..n {
-            odd <<= 1;
-            if counters[i] & 1 == 1 {
-                odds[i] = 1;
-                odd |= 1;
-                counters[i] -= 1;
-                if counters[i] == 0 {
-                    non_zeros -= 1;
-                }
-            }
-            counters[i] /= 2;
-        }
-        let tmp = alpha_initialize_state(odd, switches);
-        steps += pos * alpha_initialize_state(odd, switches);
-        pos <<= 1;
-    }
-    steps
-}
-
-fn beta_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
-    let mut total = 0;
-    let mut i = 0;
-    for (_, switches, joltage) in reqs {
-        // println!("i {i:?}, joltage {joltage:?}");
-        // let mut result = beta_initialize_state(switches, joltage.to_vec());
-        // println!("result {result:?}");
-        total += beta_initialize_state(switches, joltage.to_vec());
-        i += 1;
-    }
-    total
-}
-
 fn main() {
-    println!("-------------------------------------------------------------");
-    let reqs = parser_bits("./data/day_10.txt");
-    match reqs {
-        Ok(mut p) => {
-            let start = Instant::now();
-            let result = alpha_initialize_all_state(&p);
-            let time = start.elapsed();
-            println!("Alpha found at {result:?}");
-            println!("Alpha version: {} in {:?}", result, time);
-            // let start = Instant::now();
-            // let result = beta_find_max_rectangle(&mut p);
-            // let time = start.elapsed();
-            // println!("Beta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-    println!("-------------------------------------------------------------");
-    let reqs = parser_bits("./data/day_10.txt");
-    match reqs {
-        Ok(p) => {
-            println!("p {p:?}");
-            let start = Instant::now();
-            let result = beta_initialize_all_state(&p);
-            let time = start.elapsed();
-            println!("Beta found at {result:?}");
-            println!("Beta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
+    println!("hello world");
+    // let reqs = parser_bits("./data/day_10.txt");
+    // match reqs {
+    //     Ok(mut p) => {
+    //         let start = Instant::now();
+    //         let result = alpha_initialize_all_state(&p);
+    //         let time = start.elapsed();
+    //         println!("Alpha found at {result:?}");
+    //         println!("Alpha version: {} in {:?}", result, time);
+    //         // let start = Instant::now();
+    //         // let result = beta_find_max_rectangle(&mut p);
+    //         // let time = start.elapsed();
+    //         // println!("Beta version: {} in {:?}", result, time);
+    //     }
+    //     _ => {
+    //         println!("Error in parsing");
+    //     }
+    // }
 }
