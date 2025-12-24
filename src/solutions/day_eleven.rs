@@ -1,35 +1,11 @@
 #![allow(dead_code, unused)]
-use advent_of_code::parsers::day_ten::{parser_bits, parser_ints};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
 use std::{error::Error, fs};
 use std::mem;
 
-// it's a directed graph connections are one way
-// starting node "you" ending node "out"
-// find the number of paths from "you" to "out"
-
-fn parser(path: &str) -> Result<HashMap<String, Vec<String>>, Box<dyn Error>> {
-    let mut content = fs::read_to_string(path)
-        .map_err(|e| format!("Unexpected file error while reading contents.\n{e:?}"))?;
-    let mut node_map = HashMap::new();
-    for line in content.lines() {
-        let (node, neighbors) = line
-            .split_once(":")
-            .ok_or("Unable to split line successfully")?;
-        node_map.insert(
-            node.to_string(),
-            neighbors
-                .split_whitespace()
-                .map(|n| n.to_string())
-                .collect(),
-        );
-    }
-    Ok(node_map)
-}
-
-fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
+pub fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     // should work but could probably do something smarter the seen hashmap is subpar
     let mut queue: VecDeque<(&str, HashSet<String>)> = VecDeque::new();
     let mut path_count = 0;
@@ -53,7 +29,7 @@ fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
 }
 
 
-fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
+pub fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     let mut curr: HashMap<&str, usize> = HashMap::new();
     let mut prev: HashMap<&str, usize> = HashMap::new();
 
@@ -129,26 +105,26 @@ fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
 }
 
 
-fn main() {
-    println!("hello world");
-    let nmap = parser("./data/day_11.txt");
-    match nmap {
-        Ok(mut c) => {
-            let start = Instant::now();
-            let result = gamma_find_number_paths(&c);
-            let time = start.elapsed();
-            println!("Gamma version: {} in {:?}", result, time);
-            let start = Instant::now();
-            let result = beta_find_number_paths(&mut c);
-            let time = start.elapsed();
-            println!("Beta version: {:?} in {:?}", result, time);
-            // let start = Instant::now();
-            // let result = beta_find_number_paths(&mut c);
-            // let time = start.elapsed();
-            // println!("Beta version: {} in {:?}", result, time);
-        }
-        _ => {
-            println!("Error in parsing");
-        }
-    }
-}
+// fn main() {
+//     println!("hello world");
+//     let nmap = parser("./data/day_11.txt");
+//     match nmap {
+//         Ok(mut c) => {
+//             let start = Instant::now();
+//             let result = gamma_find_number_paths(&c);
+//             let time = start.elapsed();
+//             println!("Gamma version: {} in {:?}", result, time);
+//             let start = Instant::now();
+//             let result = beta_find_number_paths(&mut c);
+//             let time = start.elapsed();
+//             println!("Beta version: {:?} in {:?}", result, time);
+//             // let start = Instant::now();
+//             // let result = beta_find_number_paths(&mut c);
+//             // let time = start.elapsed();
+//             // println!("Beta version: {} in {:?}", result, time);
+//         }
+//         _ => {
+//             println!("Error in parsing");
+//         }
+//     }
+// }

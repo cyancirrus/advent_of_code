@@ -11,3 +11,4 @@ pub mod day_six;
 pub mod day_ten;
 pub mod day_three;
 pub mod day_two;
+pub mod day_eleven;
