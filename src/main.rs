@@ -120,14 +120,14 @@ fn fill_rotate_1(
     }
     for i in 0..N {
         for j in 0..N {
-            if shape[i * N + j] && space[( j +  x) * m + n - i - 1 + y] {
+            if shape[i * N + j] && space[(j +  x) * m + N - i - 1 + y] {
                 return false;
             }
         }
     }
     for i in 0..N {
         for j in 0..N {
-            space[(j + x) * m + n - i - 1 + y] = shape[i * N + j];
+            space[(j + x) * m + N - i - 1 + y] = shape[i * N + j];
         }
     }
     true
@@ -146,16 +146,14 @@ fn fill_rotate_2(
     }
     for i in 0..N {
         for j in 0..N {
-            // println!("i {i:}, j {j:}");
-            // println!("shape {}, space {}", i*N + j , ( j + x) * m + n - i - 1 + y);
-            if shape[i * N + j] && space[(m - i  - 1 + x) * m + n - j  - 1 + y] {
+            if shape[i * N + j] && space[(N - i  - 1 + x) * m + N - j  - 1 + y] {
                 return false;
             }
         }
     }
     for i in 0..N {
         for j in 0..N {
-            space[(m - i  - 1 + x) * m + n - j  - 1 + y] = shape[i * N + j];
+            space[(N - i  - 1 + x) * m + N - j  - 1 + y] = shape[i * N + j];
         }
     }
     true
@@ -218,9 +216,9 @@ fn main() {
         true, false, false,
         true, true, true
     ];
-    let (m, n) = (3, 3);
-    let (x, y) = (0, 0);
-    print_fill(&test_shape, m, n);
+    let (m, n) = (4, 4);
+    let (x, y) = (1, 1);
+    print_fill(&test_shape, 3, 3);
     
     println!("-------------"); 
     let mut test_space = vec![false; m * n];
