@@ -1,9 +1,9 @@
 #![allow(dead_code, unused)]
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::mem;
 use std::time::Instant;
 use std::{error::Error, fs};
-use std::mem;
 
 // it's a directed graph connections are one way
 // starting node "you" ending node "out"

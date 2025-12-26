@@ -1,9 +1,9 @@
 #![allow(dead_code, unused)]
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::mem;
 use std::time::Instant;
 use std::{error::Error, fs};
-use std::mem;
 
 pub fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     // should work but could probably do something smarter the seen hashmap is subpar
@@ -28,7 +28,6 @@ pub fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize
     path_count
 }
 
-
 pub fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     let mut curr: HashMap<&str, usize> = HashMap::new();
     let mut prev: HashMap<&str, usize> = HashMap::new();
@@ -42,7 +41,9 @@ pub fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize
         for (k, v) in node_map {
             let k = k.as_str();
             if let Some(&ck) = prev.get(k) {
-                if ck == 0 { continue; }
+                if ck == 0 {
+                    continue;
+                }
                 for n in v {
                     let n = n.as_str();
                     if n == end {
@@ -58,8 +59,6 @@ pub fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize
     path_count
 }
 
-
-
 fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     let mut curr: HashMap<&str, (usize, usize, usize, usize)> = HashMap::new();
     let mut prev: HashMap<&str, (usize, usize, usize, usize)> = HashMap::new();
@@ -68,7 +67,7 @@ fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
     let end = "out";
     let must_pass_1 = "fft";
     let must_pass_2 = "dac";
-    prev.insert(start, (1, 0, 0, 0 ));
+    prev.insert(start, (1, 0, 0, 0));
     let mut result = 0;
     while !prev.is_empty() {
         // println!("prev {prev:?}");
@@ -76,10 +75,12 @@ fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
         for (k, v) in node_map {
             let k = k.as_str();
             if let Some(&(ck, ck_mp1, ck_mp2, ck_all)) = prev.get(k) {
-                if ck == 0 && ck_mp1 == 0 && ck_mp2 == 0 && ck_all == 0 { continue; }
+                if ck == 0 && ck_mp1 == 0 && ck_mp2 == 0 && ck_all == 0 {
+                    continue;
+                }
                 for n in v {
                     let n = n.as_str();
-                    let entry = curr.entry(n).or_insert((0,0,0,0));
+                    let entry = curr.entry(n).or_insert((0, 0, 0, 0));
                     let (cn, cn_mp1, cn_mp2, cn_all) = entry;
                     if n == must_pass_1 {
                         *cn_mp1 += ck + ck_mp1;
@@ -96,14 +97,13 @@ fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
                 }
             }
         }
-        if let Some(&(_,_,_,r)) = curr.get(end) {
+        if let Some(&(_, _, _, r)) = curr.get(end) {
             result += r;
         }
         mem::swap(&mut curr, &mut prev);
     }
     result
 }
-
 
 // fn main() {
 //     println!("hello world");
