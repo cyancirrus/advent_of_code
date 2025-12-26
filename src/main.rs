@@ -48,7 +48,7 @@ fn parser_fills(path:&str) -> Result<Vec<(usize, usize, Vec<usize>)>, Box<dyn Er
                     requirement.0 = num;
                     num = 0;
                 },
-                d if d.is_ascii_digit() => {
+                d if c.is_ascii_digit() => {
                     num = num * 10 + (d - b'0') as usize;
                 },
                 _ => {
@@ -57,6 +57,12 @@ fn parser_fills(path:&str) -> Result<Vec<(usize, usize, Vec<usize>)>, Box<dyn Er
             }
         }
         requirement.1 = num;
+        num = 0;
+        // for c in indices_string.bytes() {
+        //     match c {
+        //         d if 
+        //     }
+        // }
         let indices = indices_string.split_whitespace();
         for idx in indices {
             match idx.parse() {
