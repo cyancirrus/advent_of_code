@@ -1,147 +1,94 @@
 #![allow(dead_code, unused)]
-use advent_of_code::parsers::day_ten::{parser_bits, parser_ints};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
 use std::{error::Error, fs};
 use std::mem;
 
-// it's a directed graph connections are one way
-// starting node "you" ending node "out"
-// find the number of paths from "you" to "out"
+const NUMBER_SHAPES:usize = 6;
+const N:usize = 9;
 
-fn parser(path: &str) -> Result<HashMap<String, Vec<String>>, Box<dyn Error>> {
-    let mut content = fs::read_to_string(path)
-        .map_err(|e| format!("Unexpected file error while reading contents.\n{e:?}"))?;
-    let mut node_map = HashMap::new();
+fn parser_shapes(path:&str) -> Result<Vec<Vec<bool>>, Box<dyn Error>> {
+    let content = fs::read_to_string(path).map_err(|e| format!("Unable to read file. Returned with error\n{e:?}"))?;
+    let mut shapes = Vec::with_capacity(NUMBER_SHAPES);
+    let mut shape = Vec::with_capacity(N * N);
+    let mut index = 0;
     for line in content.lines() {
-        let (node, neighbors) = line
-            .split_once(":")
-            .ok_or("Unable to split line successfully")?;
-        node_map.insert(
-            node.to_string(),
-            neighbors
-                .split_whitespace()
-                .map(|n| n.to_string())
-                .collect(),
-        );
-    }
-    Ok(node_map)
-}
-
-fn alpha_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
-    // should work but could probably do something smarter the seen hashmap is subpar
-    let mut queue: VecDeque<(&str, HashSet<String>)> = VecDeque::new();
-    let mut path_count = 0;
-    let start = "you";
-    queue.push_back((start, HashSet::new()));
-    while let Some((path, seen)) = queue.pop_front() {
-        if let Some(neighs) = node_map.get(path) {
-            for n in neighs {
-                if n == "out" {
-                    path_count += 1;
-                    continue;
-                } else if !seen.contains(n) {
-                    let mut new_seen = seen.clone();
-                    new_seen.insert(n.to_string());
-                    queue.push_back((n, new_seen));
+        if line.is_empty() {
+            shapes.push(shape.clone());
+            shape.clear();
+            index = 0;
+        }
+        for c in line.bytes() {
+            match c {
+                b'#' => shape.push(true),
+                b'.' => shape.push(false),
+                d if c.is_ascii_digit() => {
+                    index = index * 10 + (d - b'0') as usize;
+                },
+                _ => {
+                    // there's some unrelated characters
                 }
             }
         }
     }
-    path_count
+    Ok(shapes)
 }
 
-
-fn gamma_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
-    let mut curr: HashMap<&str, usize> = HashMap::new();
-    let mut prev: HashMap<&str, usize> = HashMap::new();
-
-    let start = "you";
-    let end = "out";
-    let mut path_count = 0;
-    prev.insert(start, 1);
-    while !prev.is_empty() {
-        curr.clear();
-        for (k, v) in node_map {
-            let k = k.as_str();
-            if let Some(&ck) = prev.get(k) {
-                if ck == 0 { continue; }
-                for n in v {
-                    let n = n.as_str();
-                    if n == end {
-                        path_count += ck;
-                    } else {
-                        *curr.entry(n).or_insert(0) += ck;
-                    }
+fn parser_fills(path:&str) -> Result<Vec<(usize, usize, Vec<usize>)>, Box<dyn Error>> {
+    let content = fs::read_to_string(path).map_err(|e| format!("Unable to read file. Returned with error\n{e:?}"))?;
+    let mut fills = Vec::new();
+    for line in content.lines() {
+        let mut requirement = (usize::MAX, usize::MAX, Vec::new());
+        let (dim_string, indices_string) = line.split_once(":").ok_or("Unable to split the dimension requirement")?;
+        let mut num = 0;
+        for c in dim_string.bytes() {
+            match c {
+                b'x' => {
+                    requirement.0 = num;
+                    num = 0;
+                },
+                d if d.is_ascii_digit() => {
+                    num = num * 10 + (d - b'0') as usize;
+                },
+                _ => {
+                    return Err(format!("Unable to parse the requirments.").into());
                 }
             }
         }
-        mem::swap(&mut curr, &mut prev);
-    }
-    path_count
-}
-
-
-
-fn beta_find_number_paths(node_map: &HashMap<String, Vec<String>>) -> usize {
-    let mut curr: HashMap<&str, (usize, usize, usize, usize)> = HashMap::new();
-    let mut prev: HashMap<&str, (usize, usize, usize, usize)> = HashMap::new();
-
-    let start = "svr";
-    let end = "out";
-    let must_pass_1 = "fft";
-    let must_pass_2 = "dac";
-    prev.insert(start, (1, 0, 0, 0 ));
-    let mut result = 0;
-    while !prev.is_empty() {
-        // println!("prev {prev:?}");
-        curr.clear();
-        for (k, v) in node_map {
-            let k = k.as_str();
-            if let Some(&(ck, ck_mp1, ck_mp2, ck_all)) = prev.get(k) {
-                if ck == 0 && ck_mp1 == 0 && ck_mp2 == 0 && ck_all == 0 { continue; }
-                for n in v {
-                    let n = n.as_str();
-                    let entry = curr.entry(n).or_insert((0,0,0,0));
-                    let (cn, cn_mp1, cn_mp2, cn_all) = entry;
-                    if n == must_pass_1 {
-                        *cn_mp1 += ck + ck_mp1;
-                        *cn_all += ck_mp2 + ck_all;
-                    } else if n == must_pass_2 {
-                        *cn_mp2 += ck + ck_mp2;
-                        *cn_all += ck_mp1 + ck_all;
-                    } else {
-                        *cn += ck;
-                        *cn_mp1 += ck_mp1;
-                        *cn_mp2 += ck_mp2;
-                        *cn_all += ck_all;
-                    }
-                }
+        requirement.1 = num;
+        let indices = indices_string.split_whitespace();
+        for idx in indices {
+            match idx.parse() {
+                Ok(i) => requirement.2.push(i),
+                Err(e) => return Err(format!("Unable to parse indices.\n{e:?}").into()),
             }
         }
-        if let Some(&(_,_,_,r)) = curr.get(end) {
-            result += r;
-        }
-        mem::swap(&mut curr, &mut prev);
+        fills.push(requirement);
     }
-    result
+    Ok(fills)
 }
+
+
 
 
 fn main() {
-    println!("hello world");
-    let nmap = parser("./data/day_11.txt");
-    match nmap {
-        Ok(mut c) => {
-            let start = Instant::now();
-            let result = gamma_find_number_paths(&c);
-            let time = start.elapsed();
-            println!("Gamma version: {} in {:?}", result, time);
-            let start = Instant::now();
-            let result = beta_find_number_paths(&mut c);
-            let time = start.elapsed();
-            println!("Beta version: {:?} in {:?}", result, time);
+    let shapes = "./data/day_12_sample_shapes.txt";
+    let fills = "./data/day_12_sample_fills.txt";
+    let data = parser_shapes(shapes);
+    let fills = parser_fills(fills);
+    match (data, fills) {
+        (Ok(d), Ok(f)) => {
+            println!("data {d:?}");
+            println!("fills {f:?}");
+            // let start = Instant::now();
+            // let result = gamma_find_number_paths(&c);
+            // let time = start.elapsed();
+            // println!("Gamma version: {} in {:?}", result, time);
+            // let start = Instant::now();
+            // let result = beta_find_number_paths(&mut c);
+            // let time = start.elapsed();
+            // println!("Beta version: {:?} in {:?}", result, time);
             // let start = Instant::now();
             // let result = beta_find_number_paths(&mut c);
             // let time = start.elapsed();
