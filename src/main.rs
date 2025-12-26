@@ -216,7 +216,7 @@ fn main() {
         true, false, false,
         true, true, true
     ];
-    let (m, n) = (4, 4);
+    let (m, n) = (6, 4);
     let (x, y) = (1, 1);
     print_fill(&test_shape, 3, 3);
     
