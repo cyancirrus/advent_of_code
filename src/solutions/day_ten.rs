@@ -29,58 +29,6 @@ fn alpha_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
     total
 }
 
-// 3547 -> (1101)
-// 2446
-// 1223 -> (1001)
-// 0222
-// 0111 -> (0111)
-
-fn beta_initialize_state(switches: &[u16], mut counters: Vec<u16>) -> usize {
-    let mut non_zeros = 0;
-    let mut steps = 0;
-    let mut pos = 1;
-    let n = counters.len();
-    for &n in &counters {
-        if n > 0 {
-            non_zeros += 1;
-        }
-    }
-    // println!("test {}", alpha_initialize_state(13, switches));
-    while non_zeros > 0 {
-        let mut odd = 0;
-        let mut odds = vec![0; n];
-        for i in 0..n {
-            odd <<= 1;
-            if counters[i] & 1 == 1 {
-                odds[i] = 1;
-                odd |= 1;
-                counters[i] -= 1;
-                if counters[i] == 0 {
-                    non_zeros -= 1;
-                }
-            }
-            counters[i] /= 2;
-        }
-        let tmp = alpha_initialize_state(odd, switches);
-        steps += pos * alpha_initialize_state(odd, switches);
-        pos <<= 1;
-    }
-    steps
-}
-
-fn beta_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
-    let mut total = 0;
-    let mut i = 0;
-    for (_, switches, joltage) in reqs {
-        // println!("i {i:?}, joltage {joltage:?}");
-        // let mut result = beta_initialize_state(switches, joltage.to_vec());
-        // println!("result {result:?}");
-        total += beta_initialize_state(switches, joltage.to_vec());
-        i += 1;
-    }
-    total
-}
-
 // fn main() {
 //     println!("-------------------------------------------------------------");
 //     let reqs = parser_bits("./data/day_10.txt");
