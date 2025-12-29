@@ -78,13 +78,13 @@ fn beta_initialize_all_state(reqs: &[(u16, Vec<u16>, Vec<u16>)]) -> usize {
     total
 }
 
-fn find_permutations(buttons:&[Vec<u16>], reqs:&[bool]) -> Vec<(Vec<u16>, Vec<usize>, u32)> {
+fn find_permutations(buttons: &[Vec<u16>], reqs: &[bool]) -> Vec<(Vec<u16>, Vec<usize>, u32)> {
     let n = reqs.len();
     let mut perms = vec![];
-    for i in 0..1<<buttons.len() {
-        let mut state = vec![false;n];
-        let mut counts =  vec![0;n];
-        let mut indices =  vec![];
+    for i in 0..1 << buttons.len() {
+        let mut state = vec![false; n];
+        let mut counts = vec![0; n];
+        let mut indices = vec![];
         let mut presses = 0;
         let mut bit = i;
         let mut j = 0;
@@ -107,7 +107,7 @@ fn find_permutations(buttons:&[Vec<u16>], reqs:&[bool]) -> Vec<(Vec<u16>, Vec<us
     perms
 }
 
-fn min_presses(buttons:&[Vec<u16>], joltage: &[u16], memo: &mut HashMap<Vec<u16>, u16>) -> u16 {
+fn min_presses(buttons: &[Vec<u16>], joltage: &[u16], memo: &mut HashMap<Vec<u16>, u16>) -> u16 {
     if let Some(&result) = memo.get(joltage) {
         return result;
     }
@@ -117,7 +117,9 @@ fn min_presses(buttons:&[Vec<u16>], joltage: &[u16], memo: &mut HashMap<Vec<u16>
     }
     let mut reqs = vec![false; n];
     for (i, j) in joltage.iter().enumerate() {
-        if j % 2 == 1 { reqs[i] = true; }
+        if j % 2 == 1 {
+            reqs[i] = true;
+        }
     }
     let perms = find_permutations(buttons, &reqs);
     let mut min = u16::MAX;
@@ -137,7 +139,9 @@ fn min_presses(buttons:&[Vec<u16>], joltage: &[u16], memo: &mut HashMap<Vec<u16>
                 remaining[idx] /= 2;
             }
         }
-        if infeasible { continue; }
+        if infeasible {
+            continue;
+        }
         let recursive = min_presses(buttons, &remaining, memo);
         if recursive != u16::MAX {
             let candidate = 2 * recursive + presses as u16;
@@ -148,7 +152,7 @@ fn min_presses(buttons:&[Vec<u16>], joltage: &[u16], memo: &mut HashMap<Vec<u16>
     min
 }
 
-fn gamma_min_presses(reqs:&[(Vec<Vec<u16>>, Vec<u16>)]) -> usize {
+fn gamma_min_presses(reqs: &[(Vec<Vec<u16>>, Vec<u16>)]) -> usize {
     let mut total = 0;
     println!("started");
     for (buttons, joltage) in reqs {
