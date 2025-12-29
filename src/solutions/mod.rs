@@ -13,4 +13,5 @@ pub mod day_ten;
 pub mod day_three;
 pub mod day_twelve_rotations;
 pub mod day_twelve_alpha;
+pub mod day_twelve_beta;
 pub mod day_two;
